@@ -1,6 +1,6 @@
-# Template repo for Terraform modules
+# Template repo for OpenTofu modules
 
-This repository contains my template for creating Terraform modules, yes even my
+This repository contains my template for creating OpenTofu modules, yes even my
 root modules. This template is based on the best practices I have learned and
 the
 [HashiCorp style guide](https://developer.hashicorp.com/terraform/language/style).
@@ -14,9 +14,9 @@ I use a wide array of tools to make things easier for me.
   - `brew install direnv`
 - [Task](https://taskfile.dev/): Replacement for GNU make. Uses YAML files.
   - `brew install go-task`
-- [Terraform](https://www.terraform.io/downloads.html): Kind of the whole point
+- [OpenTofu](https://github.com/open-tofu/opentofu): Kind of the whole point
   here 😄
-  - `brew install hashicorp/tap/terraform`
+  - `brew install opentofu`
 - [git](https://git-scm.com/downloads): Another obvious one 😃
   - `brew install git`
 - [pre-commit](https://pre-commit.com/): Provides a method for running scripts
@@ -38,15 +38,15 @@ I use a wide array of tools to make things easier for me.
 All of these tools can be used standalone, but I use them as part of the git
 commit process.
 
-- [terraform-docs](https://github.com/terraform-docs/terraform-docs):
+- [opentofu-docs](https://github.com/terraform-docs/terraform-docs):
   Dynamically updates your README.md with information on the inputs, outputs,
   and requirements of your module.
-  - `brew install terraform-docs`
+  - `brew install opentofu-docs`
 - [infracost](https://github.com/infracost/infracost): Gives you a cost estimate
   for the cloud resources your module would deploy.
   - `brew install infracost`
 - [jq](https://github.com/stedolan/jq): A lightweight and flexible command-line
-  JSON processor. required for `terraform_validate` with
+  JSON processor. required for `opentofu_validate` with
   `--retry-once-with-cleanup` flag, and for `infracost_breakdown` hook.
   - `brew install jq`
 - [TFLint](https://github.com/terraform-linters/tflint): A Terraform linter that
@@ -97,7 +97,7 @@ Here are a couple of tools I use to help with managing Terraform versions.
 
 ### Code Editor
 
-I use [Visual Studio Code](https://code.visualstudio.com/) as my code editor. I
+I use [Windsurf](https://windsurf.github.io/) as my code editor. I
 have included my settings and extensions in the .vscode directory, so they
 should be automatically installed when you open the project. They are also
 listed below.
@@ -165,7 +165,7 @@ I've included example config files for some of the tools.
 
 `pre-commit`: Review `.pre-commit-config.yaml` to enable/disable hooks.
 
-`terraform-docs`: Review `.terraform-docs.yml` to adjust document formatting
+`opentofu-docs`: Review `.opentofu-docs.yaml` to adjust document formatting
 options.
 
 `TFLint`: Review `.tflint.hcl`
@@ -179,7 +179,7 @@ options.
 Everything above this should be removed and replaced with your module
 description.
 
-The following two lines specify where the `terraform-docs` dynamic content will
+The following two lines specify where the `opentofu-docs` dynamic content will
 be placed.
 
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
@@ -188,9 +188,9 @@ be placed.
 
 | Name      | Version |
 | --------- | ------- |
-| terraform | ~> 1.0  |
-| google    | ~>4.55  |
-| hcp       | ~>0.54  |
+| opentofu | ~>1.7.0  |
+| google    | ~>6.24  |
+| hashicorp | ~>0.54  |
 
 ## Providers
 

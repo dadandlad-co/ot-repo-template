@@ -1,12 +1,12 @@
 ---
 #----------------------------------------------------------------------------
-# .terraform-docs.yml
-# use the following command to install on a Mac:
-# brew install terraform-docs
+# .opentofu-docs.yml
+# use the following command to install OpenTofu:
+# brew install opentofu
 #----------------------------------------------------------------------------
 
 settings:
-anchor: false
+  anchor: false
 
 sort:
   enabled: true

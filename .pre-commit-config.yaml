@@ -13,9 +13,9 @@ repos:
         entry: trufflehog git file://. --since-commit HEAD --fail
         language: golang
         pass_filenames: false
-        stages: ["commit", "push"]
+        stages: ["pre-commit", "pre-push"]
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -27,21 +27,33 @@ repos:
         args:
           - "--autofix"
           - "--no-sort-keys"
-  - repo: https://github.com/antonbabenko/pre-commit-terraform
-    rev: v1.96.1
+  - repo: https://github.com/tofuutils/pre-commit-opentofu
+    rev: v2.1.0  # Replace with the latest version of OpenTofu hooks repository.
     hooks:
-      - id: terraform_fmt
-      - id: terraform_validate
+      - id: tofu_fmt
+        name: OpenTofu Format
+        description: Format OpenTofu configuration files.
+      - id: tofu_validate
+        name: OpenTofu Validate
+        description: Validate OpenTofu configuration files.
         args:
           - --hook-config=--retry-once-with-cleanup=true
-      - id: terraform_docs
+      - id: tofu_docs
+        name: OpenTofu Docs Generator
+        description: Generate documentation for OpenTofu modules.
         args:
           - --args=--lockfile=false
-      - id: terraform_tflint
+      - id: tofu_tflint
+        name: OpenTofu Linting
+        description: Run tflint for linting OpenTofu configuration files.
         args:
           - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
-      - id: terraform_checkov
-      - id: infracost_breakdown
-        args:
-          - --args=--path=.
-          - --args=--terraform-var-file="terraform.tfvars"
+      - id: tofu_checkov
+        name: OpenTofu Security Checks
+        description: Run Checkov for security scanning of OpenTofu configurations.
+      # - id: infracost_breakdown
+      #   name: Cost Breakdown Analysis for OpenTofu Configurations
+      #   description: Analyze cost breakdown using Infracost for OpenTofu configurations.
+      #   args:
+      #     - --args=--path=.
+      #     - --args=--opentofu-var-file="infracost.tfvars"

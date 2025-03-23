@@ -50,8 +50,8 @@ tasks:
     requires:
       vars: [ORGANIZATION]
     vars:
-      MANAGED_FILES: .envrc .gitignore .pre-commit-config.yaml .terraform-docs.yml .tflint.hcl Taskfile.yaml
-      PRECOMMIT: git@github.com:{{.ORGANIZATION}}/tf-repo-template.git
+      MANAGED_FILES: .envrc .gitignore .pre-commit-config.yaml .opentofu-docs.yml .tflint.hcl Taskfile.yaml
+      PRECOMMIT: git@github.com:{{.ORGANIZATION}}/opentofu-repo-template.git
     cmds:
       - |
         # Move the existing files to a HOLD directory
@@ -69,15 +69,15 @@ tasks:
         done
       - defer: { task: clean }
 
-  run-terraform:
-    desc: Render the boilr template for terraform repos
+  run-opentofu:
+    desc: Render the boilr template for OpenTofu repos
     aliases: [run-tf]
     requires:
       vars: [REPO]
     cmds:
       - |
-        if [ -d "terraform" ]; then
-          mv terraform terraform.HOLD
+        if [ -d "opentofu" ]; then
+          mv opentofu opentofu.HOLD
         fi
       - defer: { task: clean }
       - "boilr template save boilr {{.REPO}} --force"
@@ -115,9 +115,11 @@ tasks:
     desc: Clean up the repository
     cmds:
       - pre-commit clean
-      - find . -name '*.HOLD' | xargs rm -r
-      - find . -type d -name '.terraform' | xargs rm -r
-      - find . -type f -name '*.tfstate*' | xargs rm -r
-      - find . -type f -name '.terraform.lock.hcl' | xargs rm -rf
       - if [ -d 'boilr' ]; then find boilr -type f -name 'README.md' | xargs rm -r; else exit 0; fi
+      - |
+        find . -name '*.HOLD' -o \
+             -type d -name '.opentofu' -o \
+             -type f -name '*.tfstate*' -o \
+             -type f -name '.opentofu.lock.hcl' \
+        | xargs -P 4 -n 1 rm -rf
       - rm -rf {{.TEMPDIR}}
