@@ -113,13 +113,14 @@ tasks:
 
   clean:
     desc: Clean up the repository
+    silent: true
     cmds:
-      - pre-commit clean
-      - if [ -d 'boilr' ]; then find boilr -type f -name 'README.md' | xargs rm -r; else exit 0; fi
+      - pre-commit clean >/dev/null 2>&1
+      - if [ -d 'boilr' ]; then find boilr -type f -name 'README.md' | xargs rm -r >/dev/null 2>&1; else exit 0; fi
       - |
         find . -name '*.HOLD' -o \
              -type d -name '.opentofu' -o \
              -type f -name '*.tfstate*' -o \
              -type f -name '.opentofu.lock.hcl' \
-        | xargs -P 4 -n 1 rm -rf
-      - rm -rf {{.TEMPDIR}}
+        | xargs -P 4 -n 1 rm -rf >/dev/null 2>&1
+      - printf "Clean done\n"
