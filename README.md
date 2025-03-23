@@ -1,9 +1,15 @@
 # Template repo for OpenTofu modules
 
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/dadandlad.co)
+
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
+[![Open Source Love](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/ellerbrock/open-source-badges/)
+
 This repository contains my template for creating OpenTofu modules, yes even my
 root modules. This template is based on the best practices I have learned and
 the
-[HashiCorp style guide](https://developer.hashicorp.com/terraform/language/style).
+[OpenTofu style guide](https://opentofu.org/docs/v1.8/language/syntax/style/).
 
 ## Tools that I use
 
