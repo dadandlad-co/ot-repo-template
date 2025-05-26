@@ -1,0 +1,320 @@
+#----------------------------------------------------------------------------
+# .markdownlint.yaml - Documentation Consistency Rules
+# Ensures consistent documentation formatting across the project
+#----------------------------------------------------------------------------
+
+# Extend default rules
+extends: default
+
+# Global settings
+default: true
+
+#----------------------------------------------------------------------------
+# Line Length Rules
+#----------------------------------------------------------------------------
+MD013:
+  # Line length - be reasonable but not too strict for documentation
+  line_length: 140
+  # Don't enforce line length in code blocks (they might need to be longer)
+  code_blocks: false
+  # Don't enforce line length in tables (they can be wide)  
+  tables: false
+  # Don't enforce line length in headings
+  headings: false
+  # Allow longer lines for URLs
+  stern: false
+
+#----------------------------------------------------------------------------
+# Heading Rules  
+#----------------------------------------------------------------------------
+MD022:
+  # Headings should be surrounded by blank lines
+  # Disable this as it can be too strict for some documentation styles
+  lines_above: 1
+  lines_below: 1
+
+MD023:
+  # Headings must start at the beginning of the line
+  enabled: true
+
+MD024:
+  # Multiple headings with the same content
+  # Allow duplicate headings in different sections
+  siblings_only: true
+  allow_different_nesting: true
+
+MD025:
+  # Multiple top level headings in the same document
+  # Allow multiple H1 headings for complex documentation
+  level: 1
+  front_matter_title: "^\\s*title\\s*[:=]"
+
+MD026:
+  # Trailing punctuation in heading
+  punctuation: ".,;:!?"
+
+#----------------------------------------------------------------------------
+# List Rules
+#----------------------------------------------------------------------------
+MD029:
+  # Ordered list item prefix
+  style: "ordered"
+
+MD030:
+  # Spaces after list markers
+  ul_single: 1
+  ol_single: 1
+  ul_multi: 1
+  ol_multi: 1
+
+MD032: 
+  # Lists should be surrounded by blank lines
+  enabled: false  # Can be too strict for inline lists
+
+#----------------------------------------------------------------------------
+# Code and Link Rules
+#----------------------------------------------------------------------------
+MD031:
+  # Fenced code blocks should be surrounded by blank lines
+  enabled: false  # Can conflict with other formatting rules
+
+MD033:
+  # Allow specific HTML tags that are commonly needed in documentation
+  allowed_elements: 
+    - "img"           # Images
+    - "br"            # Line breaks
+    - "sub"           # Subscript
+    - "sup"           # Superscript
+    - "details"       # Collapsible sections
+    - "summary"       # Summary for details
+    - "table"         # Complex tables
+    - "thead"         # Table headers
+    - "tbody"         # Table body
+    - "tr"            # Table rows
+    - "th"            # Table header cells
+    - "td"            # Table data cells
+    - "div"           # Dividers (for GitHub alerts, etc.)
+    - "kbd"           # Keyboard keys
+    - "code"          # Inline code (when backticks aren't sufficient)
+
+MD034:
+  # Bare URL used - require proper link formatting
+  enabled: true
+
+MD036:
+  # Emphasis used instead of a heading
+  enabled: true
+  punctuation: ".,;:!?"
+
+#----------------------------------------------------------------------------
+# Whitespace Rules
+#----------------------------------------------------------------------------
+MD009:
+  # Trailing spaces
+  br_spaces: 2      # Allow 2 trailing spaces for line breaks
+  list_item_empty_lines: false
+  strict: false
+
+MD010:
+  # Hard tabs - prefer spaces
+  code_blocks: false  # Allow tabs in code blocks where they might be meaningful
+
+MD012:
+  # Multiple consecutive blank lines
+  maximum: 3        # Allow up to 3 blank lines for section breaks
+
+MD027:
+  # Multiple spaces after blockquote symbol
+  enabled: true
+
+MD028:
+  # Blank line inside blockquote
+  enabled: false    # Allow blank lines in blockquotes for readability
+
+#----------------------------------------------------------------------------
+# Language and Content Rules
+#----------------------------------------------------------------------------
+MD040:
+  # Fenced code blocks should have a language specified
+  enabled: true
+  allowed_languages: 
+    - "bash"
+    - "shell"
+    - "sh"
+    - "hcl"
+    - "terraform"
+    - "yaml"
+    - "yml"
+    - "json"
+    - "dockerfile"
+    - "makefile"
+    - "toml"
+    - "ini"
+    - "console"
+    - "text"
+    - "markdown"
+    - "md"
+    - "diff"
+    - "xml"
+    - "html"
+    - "css"
+    - "javascript"
+    - "js"
+    - "python"
+    - "py"
+    - "go"
+    - "rust"
+    - "c"
+    - "cpp"
+    - "java"
+    - "sql"
+
+MD041:
+  # First line in file should be a top level heading
+  enabled: false    # Disable as README files might start with badges or other content
+  
+MD042:
+  # No empty links
+  enabled: true
+
+MD043:
+  # Required heading structure
+  enabled: false    # Don't enforce specific heading structures
+
+MD044:
+  # Proper names should have the correct capitalization
+  enabled: true
+  names: 
+    - "GitHub"
+    - "OpenTofu"
+    - "Terraform"
+    - "HashiCorp"
+    - "AWS"
+    - "Amazon Web Services"
+    - "Google Cloud"
+    - "GCP"
+    - "Microsoft Azure"
+    - "Azure"
+    - "Kubernetes"
+    - "Docker"
+    - "JSON"
+    - "YAML"
+    - "XML"
+    - "HTML"
+    - "CSS"
+    - "JavaScript"
+    - "TypeScript"
+    - "Python"
+    - "Node.js"
+    - "npm"
+    - "API"
+    - "REST"
+    - "GraphQL"
+    - "SQL"
+    - "NoSQL"
+    - "CI/CD"
+    - "DevOps"
+    - "GitOps"
+    - "Infrastructure as Code"
+    - "IaC"
+  code_blocks: false  # Don't enforce in code blocks
+
+MD045:
+  # Images should have alternate text
+  enabled: true
+
+MD046:
+  # Code block style consistency
+  style: "fenced"   # Prefer fenced code blocks over indented
+
+MD047:
+  # Files should end with a single newline character
+  enabled: true
+
+MD048:
+  # Code fence style
+  style: "backtick" # Prefer ``` over ~~~
+
+MD049:
+  # Emphasis style consistency
+  style: "asterisk" # Prefer *emphasis* over _emphasis_
+
+MD050:
+  # Strong style consistency  
+  style: "asterisk" # Prefer **strong** over __strong__
+
+MD051:
+  # Link fragments should be valid
+  enabled: false    # Can be overly strict with anchor links
+
+MD052:
+  # Reference links and images should use a label that is defined
+  enabled: true
+
+MD053:
+  # Link and image reference definitions should be needed
+  enabled: true
+
+#----------------------------------------------------------------------------
+# Project-Specific Configurations
+#----------------------------------------------------------------------------
+
+# Custom configuration for documentation files
+MD001:
+  # Heading levels should only increment by one level at a time
+  enabled: true
+
+MD003:
+  # Heading style consistency
+  style: "atx"      # Prefer # style headings over === underlines
+
+MD004:
+  # Unordered list style consistency
+  style: "dash"     # Prefer - for unordered lists
+
+MD005:
+  # Inconsistent indentation for list items at the same level
+  enabled: true
+
+MD006:
+  # Consider starting bulleted lists at the beginning of the line
+  enabled: false    # Allow indented lists for better organization
+
+MD007:
+  # Unordered list indentation
+  indent: 2         # Use 2 spaces for list indentation
+  start_indented: false
+
+#----------------------------------------------------------------------------
+# File Exclusions
+#----------------------------------------------------------------------------
+# Note: Exclusions are typically handled by the calling tool (pre-commit, etc.)
+# Common exclusions would include:
+# - .terraform/
+# - node_modules/
+# - vendor/
+# - .git/
+# - examples/*/terraform.tfvars
+# - CHANGELOG.md (often auto-generated)
+
+#----------------------------------------------------------------------------
+# Integration with Documentation Tools
+#----------------------------------------------------------------------------
+# When ENABLE_DOCUMENTATION_AUTOMATION=true, be more strict about:
+# - Required headings structure
+# - Link validation  
+# - Image alt text
+# This would be configured via environment-specific overrides
+
+#----------------------------------------------------------------------------
+# Development vs Production Settings
+#----------------------------------------------------------------------------
+# In development mode (AUTO_APPROVE_SETUP=true), be more lenient with:
+# - Line length
+# - Heading structure
+# - Link validation
+
+# For release automation (ENABLE_RELEASE_AUTOMATION=true), enforce stricter rules for:
+# - Proper names capitalization
+# - Link validation
+# - Complete documentation structure

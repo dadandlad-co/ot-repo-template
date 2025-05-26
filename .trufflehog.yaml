@@ -1,0 +1,591 @@
+#----------------------------------------------------------------------------
+# .trufflehog.yaml - Secret Detection Configuration
+# Comprehensive secret scanning with environment-based customization
+#----------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------
+# Global Configuration
+#----------------------------------------------------------------------------
+# Output configuration
+no-color: false
+json: false
+json-legacy: false
+
+# Verification settings
+no-verification: false
+only-verified: false
+allow-verification-overlap: false
+
+# Performance settings
+concurrency: 10
+max-depth: 5
+
+# Archive settings
+archive-max-size: 20MB
+archive-max-depth: 5
+archive-timeout: 60s
+
+# Include/exclude patterns
+include-paths: []
+exclude-paths:
+  # Standard exclusions for development files
+  - ".terraform/"
+  - ".terraform.lock.hcl"
+  - "**/.terraform/**"
+  - "**/node_modules/**"
+  - "**/vendor/**"
+  - ".git/"
+  - "**/.git/**"
+  
+  # Build and cache directories
+  - "**/build/**"
+  - "**/dist/**" 
+  - "**/target/**"
+  - "**/.cache/**"
+  - "**/.tmp/**"
+  - "**/tmp/**"
+  
+  # IDE and editor files
+  - "**/.vscode/**"
+  - "**/.idea/**"
+  - "**/*.swp"
+  - "**/*.swo"
+  - "**/*~"
+  
+  # Package manager files
+  - "**/package-lock.json"
+  - "**/yarn.lock"
+  - "**/Pipfile.lock"
+  - "**/poetry.lock"
+  - "**/go.sum"
+  - "**/Cargo.lock"
+  
+  # Log files
+  - "**/*.log"
+  - "**/logs/**"
+  
+  # Generated files
+  - "**/*.generated.*"
+  - "**/generated/**"
+  - "**/*_pb2.py"
+  - "**/*.pb.go"
+  
+  # Test fixtures and mock data (may contain fake secrets)
+  - "**/fixtures/**"
+  - "**/mocks/**"
+  - "**/testdata/**"
+  - "**/__pycache__/**"
+  
+  # Documentation that might contain example secrets
+  - "**/docs/**/*.md"
+  - "**/README*.md"
+  - "**/CHANGELOG*.md"
+  
+  # Configuration templates (likely have placeholder secrets)
+  - "**/*.template"
+  - "**/*.template.*"
+  - "**/*.example"
+  - "**/*.example.*"
+  - "**/*.sample"
+  - "**/*.sample.*"
+
+#----------------------------------------------------------------------------
+# Detector Configuration
+#----------------------------------------------------------------------------
+# Enable all detectors by default, then selectively disable
+detectors:
+  # Cloud Provider Credentials
+  - name: "AWS"
+    enabled: true
+    keywords: ["aws", "amazon"]
+  
+  - name: "GCP"
+    enabled: true
+    keywords: ["gcp", "google", "cloud"]
+  
+  - name: "Azure"
+    enabled: true
+    keywords: ["azure", "microsoft"]
+  
+  # Version Control
+  - name: "GitHub"
+    enabled: true
+    keywords: ["github", "gh", "git"]
+  
+  - name: "GitLab"
+    enabled: true
+    keywords: ["gitlab"]
+  
+  - name: "Bitbucket"
+    enabled: true
+    keywords: ["bitbucket"]
+  
+  # Databases
+  - name: "MySQL"
+    enabled: true
+    keywords: ["mysql", "mariadb"]
+  
+  - name: "PostgreSQL"
+    enabled: true
+    keywords: ["postgres", "postgresql", "psql"]
+  
+  - name: "MongoDB"
+    enabled: true
+    keywords: ["mongo", "mongodb"]
+  
+  - name: "Redis"
+    enabled: true
+    keywords: ["redis"]
+  
+  # API Services
+  - name: "Slack"
+    enabled: true
+    keywords: ["slack"]
+  
+  - name: "Stripe"
+    enabled: true
+    keywords: ["stripe"]
+  
+  - name: "Twilio"
+    enabled: true
+    keywords: ["twilio"]
+  
+  - name: "SendGrid"
+    enabled: true
+    keywords: ["sendgrid"]
+  
+  - name: "Mailgun"
+    enabled: true
+    keywords: ["mailgun"]
+  
+  # Generic patterns
+  - name: "PrivateKey"
+    enabled: true
+    keywords: ["private", "key", "rsa", "ssh"]
+  
+  - name: "JWT"
+    enabled: true
+    keywords: ["jwt", "token"]
+  
+  - name: "Generic"
+    enabled: true
+    keywords: ["api", "key", "secret", "token", "password"]
+
+#----------------------------------------------------------------------------
+# Custom Detectors
+#----------------------------------------------------------------------------
+custom-detectors:
+  # Organization-specific API keys
+  - name: "OrganizationAPIKey"
+    regex: "(?i)(org|company)[-_]?(api[-_]?key|apikey)\\s*[:=]\\s*[\"']?[a-zA-Z0-9]{32,}[\"']?"
+    keywords: ["org", "company", "api", "key"]
+    verify: false
+  
+  # Database connection strings
+  - name: "DatabaseConnectionString"
+    regex: "(?i)(database_url|db_url|connection_string|conn_str)\\s*[:=]\\s*[\"']?[^\\s\"']+://[^\\s\"']+[\"']?"
+    keywords: ["database", "connection", "string"]
+    verify: false
+  
+  # Custom certificates
+  - name: "CustomCertificate"
+    regex: "-----BEGIN\\s+(CERTIFICATE|PUBLIC\\s+KEY|PRIVATE\\s+KEY)-----[\\s\\S]*?-----END\\s+\\1-----"
+    keywords: ["begin", "certificate", "key", "end"]
+    verify: false
+  
+  # Docker registry credentials
+  - name: "DockerCredentials"
+    regex: "(?i)(docker|registry)[-_]?(password|token|auth)\\s*[:=]\\s*[\"']?[a-zA-Z0-9+/=]{20,}[\"']?"
+    keywords: ["docker", "registry", "auth"]
+    verify: false
+  
+  # Kubernetes secrets
+  - name: "KubernetesSecret"
+    regex: "(?i)(k8s|kube|kubernetes)[-_]?(secret|token|key)\\s*[:=]\\s*[\"']?[a-zA-Z0-9+/=]{20,}[\"']?"
+    keywords: ["kubernetes", "k8s", "kube", "secret"]
+    verify: false
+  
+  # CI/CD tokens
+  - name: "CICDToken"
+    regex: "(?i)(ci|cd|build|deploy)[-_]?(token|key|secret)\\s*[:=]\\s*[\"']?[a-zA-Z0-9]{20,}[\"']?"
+    keywords: ["ci", "cd", "build", "deploy", "token"]
+    verify: false
+  
+  # Terraform Cloud/Enterprise tokens
+  - name: "TerraformToken"
+    regex: "(?i)(terraform|tf|tfe)[-_]?(token|key)\\s*[:=]\\s*[\"']?[a-zA-Z0-9]{20,}[\"']?"
+    keywords: ["terraform", "tf", "tfe", "token"]
+    verify: false
+
+#----------------------------------------------------------------------------
+# Verification Configuration
+#----------------------------------------------------------------------------
+verification:
+  # Timeout for verification requests
+  timeout: 10s
+  
+  # Number of retries for failed verifications
+  retries: 3
+  
+  # Enable/disable verification for specific detectors
+  detector-verification:
+    AWS: true
+    GCP: true
+    Azure: true
+    GitHub: true
+    GitLab: true
+    Slack: false    # Slack verification can be rate-limited
+    Generic: false  # Generic patterns often have false positives
+  
+  # Custom verification endpoints
+  custom-verifiers:
+    - name: "OrganizationAPI"
+      endpoint: "https://api.organization.com/validate"
+      method: "POST"
+      headers:
+        "Content-Type": "application/json"
+        "Authorization": "Bearer ${VERIFICATION_TOKEN}"
+      timeout: 5s
+
+#----------------------------------------------------------------------------
+# False Positive Reduction
+#----------------------------------------------------------------------------
+# Allowlist patterns that should not be flagged as secrets
+allowlist:
+  # Common false positives
+  patterns:
+    # Example/placeholder values
+    - "example\\.com"
+    - "placeholder"
+    - "your[-_]?(api[-_]?key|token|secret)"
+    - "replace[-_]?with[-_]?your"
+    - "\\$\\{[^}]+\\}"  # Variable substitutions
+    - "<%[^%]+%>"       # Template variables
+    - "\\{\\{[^}]+\\}\\}" # Handlebars/Mustache templates
+    
+    # Test and development patterns
+    - "test[-_]?(key|token|secret)"
+    - "dev[-_]?(key|token|secret)"
+    - "demo[-_]?(key|token|secret)"
+    - "sample[-_]?(key|token|secret)"
+    - "fake[-_]?(key|token|secret)"
+    - "mock[-_]?(key|token|secret)"
+    
+    # Common non-secret patterns that trigger false positives
+    - "localhost"
+    - "127\\.0\\.0\\.1"
+    - "0\\.0\\.0\\.0"
+    - "version\\s*[:=]\\s*[\"']?[0-9]+\\.[0-9]+\\.[0-9]+[\"']?"
+    
+    # Documentation patterns
+    - "\\*\\*\\*+.*\\*\\*\\*+"  # Redacted content in docs
+    - "xxx+.*xxx+"              # Redacted content
+    - "redacted"
+    - "hidden"
+    - "censored"
+  
+  # File-specific allowlists
+  files:
+    "*.md":
+      - "api[-_]?key"     # Documentation often mentions API keys generically
+      - "secret"          # Generic references in documentation
+      - "token"           # Generic references in documentation
+    
+    "*.example":
+      - ".*"              # Allow everything in example files
+    
+    "*.template":
+      - ".*"              # Allow everything in template files
+    
+    "*.sample":
+      - ".*"              # Allow everything in sample files
+    
+    "*test*":
+      - "test.*secret"    # Test files often have test secrets
+      - "fake.*key"       # Test files often have fake keys
+    
+    "docker-compose*.yml":
+      - "password.*root"  # Common dev setup
+      - "POSTGRES_PASSWORD"
+      - "MYSQL_ROOT_PASSWORD"
+
+#----------------------------------------------------------------------------
+# Output Configuration
+#----------------------------------------------------------------------------
+output:
+  # Format options: json, yaml, text
+  format: "text"
+  
+  # Include metadata in output
+  include-metadata: true
+  
+  # Show only verified secrets
+  verified-only: false
+  
+  # Group results by file
+  group-by-file: true
+  
+  # Include source code context
+  include-context: true
+  context-lines: 3
+  
+  # Redact secrets in output (show only partial)
+  redact-secrets: true
+  redact-length: 8
+
+#----------------------------------------------------------------------------
+# Reporting Configuration
+#----------------------------------------------------------------------------
+reporting:
+  # Generate reports in multiple formats
+  formats:
+    - format: "json"
+      output-file: "trufflehog-report.json"
+      include-verified: true
+      include-unverified: true
+    
+    - format: "csv"
+      output-file: "trufflehog-report.csv"
+      include-verified: true
+      include-unverified: false
+    
+    - format: "sarif"
+      output-file: "trufflehog-report.sarif"
+      include-verified: true
+      include-unverified: true
+  
+  # Summary statistics
+  include-stats: true
+  
+  # Historical comparison
+  compare-with-baseline: false
+  baseline-file: "trufflehog-baseline.json"
+
+#----------------------------------------------------------------------------
+# Git Integration
+#----------------------------------------------------------------------------
+git:
+  # Scan specific commit range
+  since-commit: ""
+  max-commit-depth: 100
+  
+  # Include specific branches
+  branches: []
+  
+  # Scan commit messages
+  scan-commit-messages: true
+  
+  # Scan author information
+  scan-author-info: false
+  
+  # Performance optimization for large repos
+  bare-clone: false
+  shallow-clone: true
+  clone-depth: 50
+
+#----------------------------------------------------------------------------
+# Archive Scanning (ZIP, TAR, etc.)
+#----------------------------------------------------------------------------
+archive:
+  # Enable archive scanning
+  scan-archives: true
+  
+  # Maximum archive size to process
+  max-size: "100MB"
+  
+  # Maximum extraction depth
+  max-depth: 3
+  
+  # Timeout for archive processing
+  timeout: "300s"
+  
+  # Supported archive types
+  supported-types:
+    - "zip"
+    - "tar"
+    - "tar.gz"
+    - "tgz"
+    - "tar.bz2"
+    - "tbz2"
+    - "tar.xz"
+    - "txz"
+
+#----------------------------------------------------------------------------
+# Environment-Specific Configuration
+#----------------------------------------------------------------------------
+# Development Environment
+development:
+  # More lenient scanning in development
+  only-verified: false
+  include-unverified: true
+  
+  # Faster scanning with reduced depth
+  max-depth: 3
+  concurrency: 5
+  
+  # Include test files and examples
+  exclude-paths: []
+
+# Staging Environment  
+staging:
+  # Balanced approach for staging
+  only-verified: false
+  include-unverified: true
+  
+  # Standard depth and concurrency
+  max-depth: 5
+  concurrency: 8
+
+# Production Environment
+production:
+  # Strict scanning for production
+  only-verified: true
+  include-unverified: false
+  
+  # Comprehensive scanning
+  max-depth: 10
+  concurrency: 15
+  
+  # Zero tolerance for secrets
+  fail-on-unverified: true
+
+#----------------------------------------------------------------------------
+# Integration Configuration
+#----------------------------------------------------------------------------
+# CI/CD Integration
+ci-integration:
+  # Exit codes
+  exit-on-found: true
+  exit-code-verified: 1
+  exit-code-unverified: 2
+  
+  # Progress reporting
+  show-progress: false
+  quiet: false
+
+# Pre-commit Integration
+pre-commit:
+  # Scan only changed files
+  scan-changed-files-only: true
+  
+  # Quick scan mode
+  quick-scan: true
+  max-depth: 3
+  
+  # Fail fast on first secret found
+  fail-fast: true
+
+# GitHub Actions Integration
+github-actions:
+  # Generate annotations
+  generate-annotations: true
+  
+  # Create PR comments
+  create-pr-comments: true
+  
+  # Upload SARIF results
+  upload-sarif: true
+
+#----------------------------------------------------------------------------
+# Notification Configuration
+#----------------------------------------------------------------------------
+notifications:
+  # Slack integration
+  slack:
+    webhook-url: "${SLACK_SECURITY_WEBHOOK}"
+    channel: "#security-alerts"
+    username: "TruffleHog"
+    icon-emoji: ":warning:"
+    notify-on-verified: true
+    notify-on-unverified: false
+  
+  # Email notifications
+  email:
+    smtp-server: "${SMTP_SERVER}"
+    smtp-port: 587
+    smtp-username: "${SMTP_USERNAME}"
+    smtp-password: "${SMTP_PASSWORD}"
+    from: "security@organization.com"
+    to: ["security-team@organization.com"]
+    subject: "TruffleHog Security Alert"
+    notify-on-verified: true
+    notify-on-unverified: false
+  
+  # Webhook notifications
+  webhook:
+    url: "${SECURITY_WEBHOOK_URL}"
+    method: "POST"
+    headers:
+      "Content-Type": "application/json"
+      "Authorization": "Bearer ${WEBHOOK_TOKEN}"
+    notify-on-verified: true
+    notify-on-unverified: false
+
+#----------------------------------------------------------------------------
+# Performance Tuning
+#----------------------------------------------------------------------------
+performance:
+  # Memory limits
+  max-memory-usage: "1GB"
+  
+  # File size limits
+  max-file-size: "10MB"
+  skip-large-files: true
+  
+  # Timeout settings
+  global-timeout: "3600s"  # 1 hour
+  per-file-timeout: "60s"
+  
+  # Caching
+  enable-caching: true
+  cache-directory: ".trufflehog-cache"
+  cache-expiry: "24h"
+  
+  # Progress tracking
+  progress-frequency: 100  # Report progress every 100 files
+
+#----------------------------------------------------------------------------
+# Environment Variable Integration Notes
+#----------------------------------------------------------------------------
+# This configuration adapts based on environment variables:
+#
+# ENABLE_SECURITY_SCANNING=false:
+#   - Skip secret scanning entirely
+#   - Exit with success code
+#
+# VERBOSE_OUTPUT=true:
+#   - Enable detailed output
+#   - Show progress information
+#   - Include debug information
+#
+# AUTO_APPROVE_SETUP=true (development):
+#   - Use development configuration
+#   - Include unverified secrets
+#   - Reduced scanning depth
+#
+# MAX_PARALLEL_PROCESSES=N:
+#   - Set concurrency level
+#   - Adjust memory usage accordingly
+#
+# ORGANIZATION_NAME:
+#   - Configure organization-specific detectors
+#   - Customize notification settings
+#
+# OPENTOFU_PROVIDER_* flags:
+#   - Enable provider-specific secret detection
+#   - Customize verification endpoints
+#   - Apply provider-specific allowlists
+
+#----------------------------------------------------------------------------
+# Usage Examples
+#----------------------------------------------------------------------------
+# Command line usage:
+# trufflehog --config .trufflehog.yaml filesystem .
+# trufflehog --config .trufflehog.yaml git https://github.com/org/repo
+# trufflehog --config .trufflehog.yaml github --org organization
+#
+# Pre-commit hook:
+# trufflehog --config .trufflehog.yaml --since-commit HEAD~1 git file://.
+#
+# CI/CD pipeline:
+# trufflehog --config .trufflehog.yaml --only-verified filesystem .

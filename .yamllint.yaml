@@ -1,0 +1,281 @@
+#----------------------------------------------------------------------------
+# .yamllint.yaml - YAML File Validation Rules
+# Ensures consistent YAML formatting across the project
+#----------------------------------------------------------------------------
+
+# Extend the default configuration
+extends: default
+
+#----------------------------------------------------------------------------
+# Global Rules Configuration
+#----------------------------------------------------------------------------
+rules:
+  #--------------------------------------------------------------------------
+  # Document Structure Rules
+  #--------------------------------------------------------------------------
+  document-start:
+    # Don't require document start markers (---)
+    present: false
+    
+  document-end:
+    # Don't require document end markers (...)
+    present: false
+
+  #--------------------------------------------------------------------------
+  # Line Rules
+  #--------------------------------------------------------------------------
+  line-length:
+    # Allow reasonable line lengths for YAML readability
+    max: 140
+    # Allow longer lines in comments for URLs and explanations
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+
+  new-line-at-end-of-file:
+    # Require newline at end of file
+    enabled: true
+
+  #--------------------------------------------------------------------------
+  # Indentation Rules
+  #--------------------------------------------------------------------------
+  indentation:
+    # Use 2 spaces for indentation (standard for YAML)
+    spaces: 2
+    # Don't indent sequences (lists) - keep them aligned with parent
+    indent-sequences: true
+    # Check indentation in multi-line strings
+    check-multi-line-strings: false
+
+  #--------------------------------------------------------------------------
+  # Spacing Rules
+  #--------------------------------------------------------------------------
+  brackets:
+    # Spacing around brackets []
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+    min-spaces-inside-empty: 0
+    max-spaces-inside-empty: 0
+
+  braces:
+    # Spacing around braces {}
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+    min-spaces-inside-empty: 0
+    max-spaces-inside-empty: 0
+
+  colons:
+    # Spacing around colons
+    max-spaces-before: 0
+    min-spaces-after: 1
+    max-spaces-after: 1
+
+  commas:
+    # Spacing around commas
+    max-spaces-before: 0
+    min-spaces-after: 1
+    max-spaces-after: 1
+
+  hyphens:
+    # Spacing around hyphens in lists
+    max-spaces-after: 1
+
+  #--------------------------------------------------------------------------
+  # Empty Line Rules
+  #--------------------------------------------------------------------------
+  empty-lines:
+    # Control empty lines
+    max: 2
+    max-start: 0
+    max-end: 1
+
+  #--------------------------------------------------------------------------
+  # Value Rules
+  #--------------------------------------------------------------------------
+  empty-values:
+    # Allow empty values in mappings
+    forbid-in-block-mappings: false
+    forbid-in-flow-mappings: true
+
+  #--------------------------------------------------------------------------
+  # String and Key Rules
+  #--------------------------------------------------------------------------
+  key-duplicates:
+    # Forbid duplicate keys
+    enabled: true
+
+  key-ordering:
+    # Don't enforce key ordering - allow logical organization
+    enabled: false
+
+  octal-values:
+    # Forbid values like 010 that might be interpreted as octal
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
+
+  quoted-strings:
+    # Don't enforce quoting style - allow mixed based on context
+    quote-type: any
+    required: false
+    extra-required: []
+    extra-allowed: []
+
+  #--------------------------------------------------------------------------
+  # Boolean and Null Rules  
+  #--------------------------------------------------------------------------
+  truthy:
+    # Allow various boolean representations
+    allowed-values: ['true', 'false', 'yes', 'no', 'on', 'off']
+    check-keys: true
+
+  #--------------------------------------------------------------------------
+  # Comment Rules
+  #--------------------------------------------------------------------------
+  comments:
+    # Require space after # in comments
+    min-spaces-from-content: 1
+
+  comments-indentation:
+    # Don't enforce strict comment indentation
+    enabled: false
+
+  #--------------------------------------------------------------------------
+  # Flow Style Rules
+  #--------------------------------------------------------------------------
+  float-values:
+    # Allow various float representations
+    require-numeral-before-decimal: false
+    forbid-scientific-notation: false
+    forbid-nan: false
+    forbid-inf: false
+
+#----------------------------------------------------------------------------
+# File-Specific Ignores and Overrides
+#----------------------------------------------------------------------------
+ignore: |
+  # Ignore common directories that contain generated or external YAML
+  .terraform/
+  .terraform.lock.hcl
+  node_modules/
+  vendor/
+  .git/
+  
+  # Ignore example files that might have different formatting requirements
+  examples/*/terraform.tfvars
+  examples/*/*.auto.tfvars
+  
+  # Ignore GitHub Actions workflows temporarily if they have different requirements
+  # .github/workflows/
+  
+  # Ignore Helm charts that might have their own formatting conventions
+  charts/
+  helm/
+  
+  # Ignore generated documentation
+  docs/generated/
+
+#----------------------------------------------------------------------------
+# Environment-Specific Configuration Overrides
+#----------------------------------------------------------------------------
+# Note: These would be applied conditionally based on environment variables
+# when yamllint is called from scripts or pre-commit hooks
+
+# When ENABLE_DOCUMENTATION_AUTOMATION=true:
+# - Be more strict about line length
+# - Enforce consistent comment formatting
+# - Require proper document structure
+
+# When VERBOSE_OUTPUT=true:
+# - Enable additional debugging rules
+# - Show more detailed rule violations
+
+# When AUTO_APPROVE_SETUP=true (development mode):
+# - Be more lenient with line length
+# - Allow more flexible spacing rules
+# - Disable some strict formatting requirements
+
+#----------------------------------------------------------------------------
+# Provider-Specific Considerations
+#----------------------------------------------------------------------------
+
+# AWS CloudFormation templates (if present)
+# - Allow longer lines for ARNs and resource names
+# - Be flexible with nested resource structures
+
+# Kubernetes manifests (if OPENTOFU_PROVIDER_AWS/GCP/AZURE=true)
+# - Allow standard Kubernetes YAML conventions
+# - Be flexible with label and annotation formatting
+
+# GitHub Actions workflows
+# - Allow longer lines for run commands
+# - Be flexible with matrix configurations
+
+#----------------------------------------------------------------------------
+# Integration-Specific Rules
+#----------------------------------------------------------------------------
+
+# Pre-commit hook integration
+# - Use appropriate error levels
+# - Provide clear, actionable error messages
+
+# CI/CD integration
+# - Ensure consistent formatting across all environments
+# - Enable strict mode for production pipelines
+
+#----------------------------------------------------------------------------
+# Custom Rule Extensions for Common YAML Types
+#----------------------------------------------------------------------------
+
+# Docker Compose files
+# - Allow service-specific formatting conventions
+# - Be flexible with environment variable definitions
+
+# Ansible playbooks (if used)
+# - Allow task-specific indentation
+# - Be flexible with variable definitions
+
+# OpenAPI/Swagger specifications
+# - Allow longer lines for descriptions and examples
+# - Be flexible with schema definitions
+
+#----------------------------------------------------------------------------
+# Performance and Processing Options
+#----------------------------------------------------------------------------
+# These would typically be set via command-line options or environment variables:
+
+# For large projects:
+# - Use parallel processing when available
+# - Set appropriate timeout values
+# - Enable caching for repeated validations
+
+# For development workflows:
+# - Enable fast mode for quick feedback
+# - Show only the first few errors per file
+# - Provide suggestions for automatic fixes
+
+#----------------------------------------------------------------------------
+# Quality Thresholds
+#----------------------------------------------------------------------------
+# Define quality gates based on project needs:
+
+# Maximum allowed violations per file: 10
+# Maximum line length violations: 5
+# Zero tolerance for: key-duplicates, syntax errors
+
+# Progressive enhancement:
+# - Start with basic rules enabled
+# - Gradually enable stricter rules as project matures
+# - Use environment variables to control rule strictness
+
+#----------------------------------------------------------------------------
+# Tool Integration Notes
+#----------------------------------------------------------------------------
+# This configuration is designed to work with:
+# 1. Pre-commit hooks for local development
+# 2. GitHub Actions for CI/CD validation
+# 3. IDE extensions for real-time feedback
+# 4. Task runner integration for project automation
+
+# Recommended usage:
+# yamllint -c .yamllint.yaml .
+# yamllint -c .yamllint.yaml --format github .  # For GitHub Actions
+# yamllint -c .yamllint.yaml --format auto .    # For colored output

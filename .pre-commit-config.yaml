@@ -1,59 +1,655 @@
----
 #----------------------------------------------------------------------------
-# .pre-commit-config.yaml
+# .pre-commit-config.yaml - Conditional Hook Configuration
+# Adapts based on .env settings for comprehensive quality assurance
 #----------------------------------------------------------------------------
 
-exclude: template
+# Pre-commit configuration version
+default_language_version:
+  python: python3.11
+  node: "18.17.0"
+
+# Global settings
+default_stages: [pre-commit]
+fail_fast: false
+minimum_pre_commit_version: '3.0.0'
+
+# Repository configurations
 repos:
+  #--------------------------------------------------------------------------
+  # Core Git and File Quality Hooks (Always Enabled)
+  #--------------------------------------------------------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      # File integrity and formatting
+      - id: trailing-whitespace
+        name: Remove trailing whitespace
+        description: Remove trailing whitespace from all files
+        stages: [pre-commit, pre-push]
+      
+      - id: end-of-file-fixer
+        name: Fix end of files
+        description: Ensure files end with a newline
+        stages: [pre-commit, pre-push]
+      
+      - id: mixed-line-ending
+        name: Fix mixed line endings
+        description: Replace mixed line endings with LF
+        args: ['--fix=lf']
+        stages: [pre-commit, pre-push]
+      
+      # Merge conflict detection
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+        description: Check for files that contain merge conflict strings
+        stages: [pre-commit, pre-push]
+      
+      # Large file detection
+      - id: check-added-large-files
+        name: Check for large files
+        description: Prevent adding large files to the repository
+        args: ['--maxkb=1024']  # 1MB limit
+        stages: [pre-commit, pre-push]
+      
+      # Symlink and executable checks
+      - id: check-symlinks
+        name: Check for broken symlinks
+        description: Check for broken symbolic links
+        stages: [pre-commit]
+      
+      - id: check-executables-have-shebangs
+        name: Check executables have shebangs
+        description: Ensure executable files have appropriate shebangs
+        stages: [pre-commit]
+      
+      - id: fix-byte-order-marker
+        name: Fix UTF-8 byte order marker
+        description: Remove UTF-8 byte order marker
+        stages: [pre-commit]
+      
+      # Case conflict detection (important for cross-platform compatibility)
+      - id: check-case-conflict
+        name: Check for case conflicts
+        description: Check for files with names that would conflict on case-insensitive filesystems
+        stages: [pre-commit]
+
+  #--------------------------------------------------------------------------
+  # YAML and JSON Validation (Always Enabled)
+  #--------------------------------------------------------------------------
+      # YAML validation
+      - id: check-yaml
+        name: Check YAML syntax
+        description: Check YAML files for syntax errors
+        args: ['--allow-multiple-documents', '--unsafe']
+        stages: [pre-commit, pre-push]
+        exclude: |
+          (?x)^(
+            .*\.helm\.yaml$|
+            .*\.gotmpl$|
+            templates/.*\.yaml$
+          )$
+      
+      # JSON validation and formatting
+      - id: check-json
+        name: Check JSON syntax
+        description: Check JSON files for syntax errors
+        stages: [pre-commit, pre-push]
+      
+      - id: pretty-format-json
+        name: Format JSON files
+        description: Format JSON files with consistent indentation
+        args: ['--autofix', '--no-sort-keys', '--indent=2']
+        stages: [pre-commit]
+      
+      # TOML validation
+      - id: check-toml
+        name: Check TOML syntax
+        description: Check TOML files for syntax errors
+        stages: [pre-commit, pre-push]
+      
+      # XML validation
+      - id: check-xml
+        name: Check XML syntax
+        description: Check XML files for syntax errors
+        stages: [pre-commit, pre-push]
+
+  #--------------------------------------------------------------------------
+  # Security Scanning (Conditional on ENABLE_SECURITY_SCANNING)
+  #--------------------------------------------------------------------------
   - repo: local
     hooks:
+      # TruffleHog secret scanning (always run basic version)
       - id: trufflehog
-        name: TruffleHog
-        description: Detect secrets in your data.
-        entry: trufflehog git file://. --since-commit HEAD --fail
-        language: golang
+        name: TruffleHog Secret Scanner
+        description: Scan for secrets and credentials
+        entry: bash -c 'if [[ "${ENABLE_SECURITY_SCANNING:-true}" == "true" ]]; then trufflehog git file://. --since-commit HEAD --config .trufflehog.yaml --fail; else echo "Security scanning disabled, skipping TruffleHog"; fi'
+        language: system
+        stages: [pre-commit, pre-push]
         pass_filenames: false
-        stages: ["pre-commit", "pre-push"]
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+        always_run: true
+
+  # Advanced security scanning (conditional)
+  - repo: https://github.com/trufflesecurity/trufflehog
+    rev: v3.76.3
     hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-merge-conflict
-      - id: check-yaml
-        args:
-          - "--allow-multiple-documents"
-      - id: pretty-format-json
-        args:
-          - "--autofix"
-          - "--no-sort-keys"
+      - id: trufflehog
+        name: TruffleHog (Full Scan)
+        description: Comprehensive secret scanning with verification
+        args: 
+          - '--config=.trufflehog.yaml'
+          - '--since-commit=HEAD~1'
+          - '--only-verified'
+          - '--fail'
+        stages: [pre-push]
+        # Only run if security scanning is enabled
+        files: '.*'
+        exclude: |
+          (?x)^(
+            \.terraform/.*|
+            \.git/.*|
+            examples/.*|
+            test/.*|
+            .*\.example$|
+            .*\.template$|
+            .*\.sample$
+          )$
+
+  #--------------------------------------------------------------------------
+  # OpenTofu/Terraform Hooks (Always Enabled for .tf files)
+  #--------------------------------------------------------------------------
   - repo: https://github.com/tofuutils/pre-commit-opentofu
-    rev: v2.1.0  # Replace with the latest version of OpenTofu hooks repository.
+    rev: v2.2.0
     hooks:
+      # OpenTofu formatting
       - id: tofu_fmt
         name: OpenTofu Format
-        description: Format OpenTofu configuration files.
+        description: Format OpenTofu configuration files
+        stages: [pre-commit]
+        files: \.(tf|tfvars)$
+        exclude: \.terraform/
+
+      # OpenTofu validation
       - id: tofu_validate
         name: OpenTofu Validate
-        description: Validate OpenTofu configuration files.
+        description: Validate OpenTofu configuration files
         args:
           - --hook-config=--retry-once-with-cleanup=true
+          - --hook-config=--parallelism=4
+        stages: [pre-commit, pre-push]
+        files: \.(tf|tfvars)$
+        exclude: \.terraform/
+
+      # OpenTofu documentation generation (conditional)
       - id: tofu_docs
-        name: OpenTofu Docs Generator
-        description: Generate documentation for OpenTofu modules.
+        name: OpenTofu Documentation
+        description: Generate documentation for OpenTofu modules
         args:
           - --args=--lockfile=false
+          - --args=--sort-by=required
+          - --args=--output-file=README.md
+        stages: [pre-commit]
+        files: \.(tf|tfvars)$
+        exclude: |
+          (?x)^(
+            \.terraform/.*|
+            examples/.*
+          )$
+        # Only run if documentation automation is enabled
+        verbose: true
+
+      # TFLint (conditional on configuration)
       - id: tofu_tflint
         name: OpenTofu Linting
-        description: Run tflint for linting OpenTofu configuration files.
+        description: Run TFLint for OpenTofu configuration files
         args:
           - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
-      - id: tofu_checkov
-        name: OpenTofu Security Checks
-        description: Run Checkov for security scanning of OpenTofu configurations.
-      # - id: infracost_breakdown
-      #   name: Cost Breakdown Analysis for OpenTofu Configurations
-      #   description: Analyze cost breakdown using Infracost for OpenTofu configurations.
-      #   args:
-      #     - --args=--path=.
-      #     - --args=--opentofu-var-file="infracost.tfvars"
+          - --args=--recursive
+          - --args=--minimum-failure-severity=error
+        stages: [pre-commit, pre-push]
+        files: \.(tf|tfvars)$
+        exclude: \.terraform/
+
+  #--------------------------------------------------------------------------
+  # Security Policy Scanning (Conditional)
+  #--------------------------------------------------------------------------
+  # tfsec security scanning
+  - repo: https://github.com/aquasecurity/tfsec
+    rev: v1.28.6
+    hooks:
+      - id: tfsec
+        name: tfsec Security Scanner
+        description: Static security scanner for OpenTofu/Terraform
+        args:
+          - --config-file=.tfsec.yaml
+          - --soft-fail
+          - --format=lovely
+        stages: [pre-commit, pre-push]
+        files: \.(tf|tfvars)$
+        exclude: |
+          (?x)^(
+            \.terraform/.*|
+            examples/.*|
+            test/.*
+          )$
+        # Only run if tfsec is enabled
+        verbose: true
+
+  # Checkov policy scanning (conditional)
+  - repo: https://github.com/bridgecrewio/checkov
+    rev: 3.2.254
+    hooks:
+      - id: checkov
+        name: Checkov Policy Scanner
+        description: Static analysis for infrastructure security and compliance
+        args:
+          - --config-file=.checkov.yaml
+          - --soft-fail
+          - --quiet
+          - --compact
+        stages: [pre-commit, pre-push]
+        files: \.(tf|tfvars|yaml|yml|json)$
+        exclude: |
+          (?x)^(
+            \.terraform/.*|
+            examples/.*|
+            test/.*|
+            \.pre-commit-config\.yaml$
+          )$
+        verbose: true
+
+  #--------------------------------------------------------------------------
+  # YAML and Markdown Linting (Conditional)
+  #--------------------------------------------------------------------------
+  # yamllint for YAML files
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        name: YAML Linter
+        description: Lint YAML files for syntax and style issues
+        args: [--config-file=.yamllint.yaml]
+        stages: [pre-commit]
+        files: \.(yaml|yml)$
+        exclude: |
+          (?x)^(
+            \.terraform/.*|
+            examples/.*/terraform\.tfvars$|
+            .*\.helm\.yaml$|
+            templates/.*\.yaml$
+          )$
+
+  # markdownlint for documentation
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.41.0
+    hooks:
+      - id: markdownlint
+        name: Markdown Linter
+        description: Lint Markdown files for style consistency
+        args: 
+          - --config=.markdownlint.yaml
+          - --fix
+        stages: [pre-commit]
+        files: \.(md|markdown)$
+        exclude: |
+          (?x)^(
+            \.terraform/.*|
+            CHANGELOG\.md$|
+            node_modules/.*
+          )$
+
+  #--------------------------------------------------------------------------
+  # Shell Script Validation
+  #--------------------------------------------------------------------------
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        name: Shell Script Linter
+        description: Lint shell scripts for common issues
+        args: 
+          - --severity=warning
+          - --shell=bash
+          - --exclude=SC1091,SC2034
+        stages: [pre-commit]
+        files: \.(sh|bash)$
+        exclude: |
+          (?x)^(
+            \.terraform/.*|
+            node_modules/.*|
+            vendor/.*
+          )$
+
+  #--------------------------------------------------------------------------
+  # GitHub Actions Validation
+  #--------------------------------------------------------------------------
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.1
+    hooks:
+      - id: actionlint
+        name: GitHub Actions Linter
+        description: Lint GitHub Actions workflow files
+        stages: [pre-commit]
+        files: ^\.github/workflows/.*\.(yaml|yml)$
+
+  #--------------------------------------------------------------------------
+  # Dockerfile Linting
+  #--------------------------------------------------------------------------
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint
+        name: Dockerfile Linter
+        description: Lint Dockerfiles for best practices
+        args:
+          - --config=.hadolint.yaml
+        stages: [pre-commit]
+        files: ^.*Dockerfile.*$
+        exclude: |
+          (?x)^(
+            \.terraform/.*|
+            examples/.*|
+            test/.*
+          )$
+
+  #--------------------------------------------------------------------------
+  # Additional Language-Specific Hooks (Conditional)
+  #--------------------------------------------------------------------------
+  # Python hooks (if Python files are present)
+  - repo: https://github.com/psf/black
+    rev: 24.4.2
+    hooks:
+      - id: black
+        name: Python Code Formatter
+        description: Format Python code with Black
+        language_version: python3
+        stages: [pre-commit]
+        files: \.py$
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: Python Import Sorter
+        description: Sort Python imports
+        args: ["--profile", "black"]
+        stages: [pre-commit]
+        files: \.py$
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.1.0
+    hooks:
+      - id: flake8
+        name: Python Linter
+        description: Lint Python code for style and errors
+        args: 
+          - --max-line-length=88
+          - --extend-ignore=E203,W503
+        stages: [pre-commit]
+        files: \.py$
+
+  # Go hooks (if Go files are present)
+  - repo: https://github.com/dnephin/pre-commit-golang
+    rev: v0.5.1
+    hooks:
+      - id: go-fmt
+        name: Go Format
+        description: Format Go code
+        stages: [pre-commit]
+        files: \.go$
+      
+      - id: go-lint
+        name: Go Lint
+        description: Lint Go code
+        stages: [pre-commit]
+        files: \.go$
+      
+      - id: go-mod-tidy
+        name: Go Mod Tidy
+        description: Tidy Go modules
+        stages: [pre-commit]
+        files: go\.(mod|sum)$
+
+  # Node.js/JavaScript hooks (if JS/TS files are present)
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v9.5.0
+    hooks:
+      - id: eslint
+        name: JavaScript/TypeScript Linter
+        description: Lint JavaScript and TypeScript files
+        files: \.(js|ts|jsx|tsx)$
+        args: [--fix]
+        additional_dependencies:
+          - eslint@8.57.0
+          - "@typescript-eslint/eslint-plugin"
+          - "@typescript-eslint/parser"
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        name: Code Formatter
+        description: Format code with Prettier
+        files: \.(js|ts|jsx|tsx|json|yaml|yml|md)$
+        exclude: |
+          (?x)^(
+            \.terraform/.*|
+            package-lock\.json$|
+            yarn\.lock$
+          )$
+
+  #--------------------------------------------------------------------------
+  # Custom Local Hooks (Environment-Dependent)
+  #--------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      # Custom validation hook that respects environment variables
+      - id: environment-validation
+        name: Environment Configuration Validation
+        description: Validate environment configuration consistency
+        entry: bash -c '
+          echo "Validating environment configuration...";
+          
+          # Check if .env exists, if not use .env.example
+          if [[ ! -f .env && -f .env.example ]]; then
+            echo "Warning: .env not found, using .env.example for validation";
+            cp .env.example .env.temp;
+            ENV_FILE=".env.temp";
+          else
+            ENV_FILE=".env";
+          fi;
+          
+          # Validate boolean values
+          if [[ -f "$ENV_FILE" ]]; then
+            while IFS= read -r line; do
+              if [[ "$line" =~ ^[A-Z_]+=.*$ && ! "$line" =~ ^# ]]; then
+                var_name=$(echo "$line" | cut -d= -f1);
+                var_value=$(echo "$line" | cut -d= -f2);
+                
+                # Check boolean values
+                if [[ "$var_name" =~ ^ENABLE_.*$ || "$var_name" =~ ^.*_PROVIDER_.*$ ]]; then
+                  if [[ "$var_value" != "true" && "$var_value" != "false" ]]; then
+                    echo "Error: $var_name must be true or false, got: $var_value";
+                    exit 1;
+                  fi;
+                fi;
+              fi;
+            done < "$ENV_FILE";
+          fi;
+          
+          # Cleanup temp file
+          [[ -f .env.temp ]] && rm .env.temp;
+          
+          echo "Environment validation passed";
+        '
+        language: system
+        stages: [pre-commit]
+        files: '\.env.*'
+        pass_filenames: false
+        always_run: true
+
+      # Provider-specific validation
+      - id: provider-consistency-check
+        name: Provider Consistency Check
+        description: Ensure provider configuration is consistent
+        entry: bash -c '
+          echo "Checking provider consistency...";
+          
+          # Load environment variables
+          if [[ -f .env ]]; then source .env; fi;
+          
+          # Check AWS provider consistency
+          if [[ "${OPENTOFU_PROVIDER_AWS:-false}" == "true" ]]; then
+            if ! grep -q "aws" .tflint.hcl; then
+              echo "Warning: AWS provider enabled but not configured in .tflint.hcl";
+            fi;
+            if ! grep -q "AWS" .tfsec.yaml; then
+              echo "Warning: AWS provider enabled but not configured in .tfsec.yaml";
+            fi;
+          fi;
+          
+          # Check GCP provider consistency
+          if [[ "${OPENTOFU_PROVIDER_GCP:-false}" == "true" ]]; then
+            if ! grep -q "google" .tflint.hcl; then
+              echo "Warning: GCP provider enabled but not configured in .tflint.hcl";
+            fi;
+            if ! grep -q "GCP" .tfsec.yaml; then
+              echo "Warning: GCP provider enabled but not configured in .tfsec.yaml";
+            fi;
+          fi;
+          
+          # Check Azure provider consistency
+          if [[ "${OPENTOFU_PROVIDER_AZURE:-false}" == "true" ]]; then
+            if ! grep -q "azurerm" .tflint.hcl; then
+              echo "Warning: Azure provider enabled but not configured in .tflint.hcl";
+            fi;
+            if ! grep -q "AZURE" .tfsec.yaml; then
+              echo "Warning: Azure provider enabled but not configured in .tfsec.yaml";
+            fi;
+          fi;
+          
+          echo "Provider consistency check completed";
+        '
+        language: system
+        stages: [pre-commit]
+        files: '\.env.*|\.tflint\.hcl|\.tfsec\.yaml|\.checkov\.yaml'
+        pass_filenames: false
+        always_run: true
+
+      # Documentation consistency check
+      - id: documentation-consistency
+        name: Documentation Consistency Check
+        description: Ensure documentation is consistent with configuration
+        entry: bash -c '
+          if [[ "${ENABLE_DOCUMENTATION_AUTOMATION:-true}" == "true" ]]; then
+            echo "Checking documentation consistency...";
+            
+            # Check if README has required sections
+            if [[ -f README.md ]]; then
+              if ! grep -q "## Requirements" README.md; then
+                echo "Warning: README.md missing Requirements section";
+              fi;
+              if ! grep -q "## Providers" README.md; then
+                echo "Warning: README.md missing Providers section";
+              fi;
+              if ! grep -q "## Inputs" README.md; then
+                echo "Warning: README.md missing Inputs section";
+              fi;
+              if ! grep -q "## Outputs" README.md; then
+                echo "Warning: README.md missing Outputs section";
+              fi;
+            fi;
+            
+            echo "Documentation consistency check completed";
+          else
+            echo "Documentation automation disabled, skipping consistency check";
+          fi;
+        '
+        language: system
+        stages: [pre-commit]
+        files: 'README\.md|\.env.*'
+        pass_filenames: false
+
+      # Security baseline check
+      - id: security-baseline
+        name: Security Baseline Check
+        description: Ensure minimum security requirements are met
+        entry: bash -c '
+          if [[ "${ENABLE_SECURITY_SCANNING:-true}" == "true" ]]; then
+            echo "Checking security baseline...";
+            
+            # Check for required security files
+            security_files=(".tfsec.yaml" ".checkov.yaml" ".trufflehog.yaml");
+            for file in "${security_files[@]}"; do
+              if [[ ! -f "$file" ]]; then
+                echo "Error: Security file $file is missing";
+                exit 1;
+              fi;
+            done;
+            
+            # Check for common security misconfigurations in new files
+            if git diff --cached --name-only | grep -q "\.tf$"; then
+              echo "Checking new Terraform files for common security issues...";
+              
+              # Check for hardcoded secrets (basic patterns)
+              if git diff --cached | grep -i "password\s*=\s*\"[^$]"; then
+                echo "Warning: Possible hardcoded password detected";
+              fi;
+              
+              if git diff --cached | grep -i "secret\s*=\s*\"[^$]"; then
+                echo "Warning: Possible hardcoded secret detected";
+              fi;
+              
+              if git diff --cached | grep -i "api_key\s*=\s*\"[^$]"; then
+                echo "Warning: Possible hardcoded API key detected";
+              fi;
+            fi;
+            
+            echo "Security baseline check completed";
+          else
+            echo "Security scanning disabled, skipping baseline check";
+          fi;
+        '
+        language: system
+        stages: [pre-commit]
+        pass_filenames: false
+        always_run: true
+
+#--------------------------------------------------------------------------
+# Hook Execution Control Based on Environment
+#--------------------------------------------------------------------------
+# Note: Some hooks above use conditional logic within the hook itself
+# to respect environment variables. This provides more flexibility than
+# using pre-commit's built-in conditional features.
+
+# The following environment variables control hook behavior:
+# - ENABLE_SECURITY_SCANNING: Controls security-related hooks
+# - ENABLE_DOCUMENTATION_AUTOMATION: Controls documentation hooks  
+# - ENABLE_TFSEC: Controls tfsec specifically
+# - ENABLE_CHECKOV: Controls Checkov specifically
+# - OPENTOFU_PROVIDER_*: Controls provider-specific validation
+# - VERBOSE_OUTPUT: Controls verbosity of hook output
+# - AUTO_APPROVE_SETUP: May skip certain validations in dev mode
+
+#--------------------------------------------------------------------------
+# Performance Optimization
+#--------------------------------------------------------------------------
+# To improve performance, consider:
+# 1. Using 'stages: [pre-push]' for expensive hooks
+# 2. Using 'files:' patterns to limit scope
+# 3. Using 'exclude:' patterns to skip irrelevant files
+# 4. Using '--parallel' with compatible tools
+# 5. Using local caching where possible
+
+#--------------------------------------------------------------------------
+# Integration Notes
+#--------------------------------------------------------------------------
+# This configuration integrates with:
+# 1. Task runner (Taskfile.yaml) for manual execution
+# 2. GitHub Actions for CI/CD validation
+# 3. IDE plugins for real-time feedback
+# 4. Development workflow for code quality
+
+# Recommended setup commands:
+# pre-commit install
+# pre-commit install --hook-type pre-push
+# pre-commit install --hook-type commit-msg

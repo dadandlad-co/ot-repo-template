@@ -1,0 +1,96 @@
+#----------------------------------------------------------------------------
+# .tfsec.yaml - Infrastructure Security Scanning Configuration
+# Adapts based on .env settings for provider support and security requirements
+#----------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------
+# Global Configuration
+#----------------------------------------------------------------------------
+# Minimum severity level for reporting
+# Options: CRITICAL, HIGH, MEDIUM, LOW
+severity: MEDIUM
+
+# Exclude downloaded modules from scanning (they should be scanned separately)
+exclude_downloaded_modules: true
+
+# Output format - options: default, json, csv, checkstyle, junit, sarif, text, gif, lovely
+format: lovely
+
+# Include ignored findings in output
+include_ignored: false
+
+# Include passed findings in output (useful for compliance reporting)
+include_passed: false
+
+# Show statistics summary
+include_statistics: true
+
+# Concurrency for scanning (will be overridden by environment if set)
+concurrency: 4
+
+#----------------------------------------------------------------------------
+# File and Directory Exclusions
+#----------------------------------------------------------------------------
+exclude_paths:
+  # Standard exclusions
+  - ".terraform/"
+  - ".terraform.lock.hcl" 
+  - "**/.terraform/**/*"
+  - "**/node_modules/**/*"
+  - "**/vendor/**/*"
+  
+  # Example configurations (may contain test data)
+  - "examples/"
+  - "test/"
+  - "tests/"
+  
+  # Generated files
+  - "**/*.generated.tf"
+  - "**/generated/**/*"
+  
+  # Backup files
+  - "**/*.backup"
+  - "**/*.bak"
+  - "**/*.old"
+  
+  # Environment-specific exclusions
+  - "terraform.tfvars"
+  - "*.auto.tfvars"
+  - ".envrc"
+  - ".env*"
+
+#----------------------------------------------------------------------------
+# Provider-Agnostic Security Rules (Always Enabled)
+#----------------------------------------------------------------------------
+include_rules:
+  # General Terraform security practices
+  - "GEN001"  # Potentially sensitive data stored in "local_file" resource
+  - "GEN002"  # Potentially sensitive data stored in Terraform state file
+  - "GEN003"  # Block contains a potentially sensitive attribute being set with a variable
+
+#----------------------------------------------------------------------------
+# Provider-Specific Rules (Conditional Based on Environment)
+#----------------------------------------------------------------------------
+
+# AWS Rules (enabled when OPENTOFU_PROVIDER_AWS=true)
+# These would be dynamically included based on environment detection
+aws_rules:
+  # IAM Security
+  - "AWS001"  # No MFA required for IAM users
+  - "AWS002"  # IAM user has admin privilege
+  - "AWS003"  # AWS credentials should not be hardcoded
+  - "AWS004"  # AWS Access Key ID should not be hardcoded
+  - "AWS005"  # IAM password policy should not allow password reuse
+  - "AWS006"  # IAM password policy should enforce minimum length
+  - "AWS007"  # IAM password policy should require numbers
+  - "AWS008"  # IAM password policy should require symbols
+  - "AWS009"  # IAM password policy should require uppercase letters
+  - "AWS010"  # IAM password policy should require lowercase letters
+  
+  # S3 Security
+  - "AWS011"  # S3 bucket should not allow public read access
+  - "AWS012"  # S3 bucket should not allow public write access
+  - "AWS013"  # S3 bucket should have bucket logging enabled
+  - "AWS014"  # S3 bucket should have versioning enabled
+  - "AWS015"  # S3 bucket should be encrypted
+  - "AWS016"  # S3 bucket

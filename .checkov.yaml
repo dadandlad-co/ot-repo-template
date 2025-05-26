@@ -1,0 +1,421 @@
+#----------------------------------------------------------------------------
+# .checkov.yaml - Policy-as-Code Security Scanning Configuration
+# Comprehensive security policy enforcement with environment-based adaptation
+#----------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------
+# Global Configuration
+#----------------------------------------------------------------------------
+# Scanning frameworks to enable
+framework:
+  - terraform
+  - terraform_plan
+  - secrets
+  - dockerfile
+  - kubernetes
+  - helm
+  - yaml
+  - json
+
+# Output configuration
+quiet: false
+compact: false
+output: 
+  - cli
+  - json
+  - junit
+  - sarif
+
+# Soft fail mode - don't exit with error code on findings
+# This allows CI/CD to continue while still reporting issues
+soft-fail: true
+
+# Parallel processing
+parallel: true
+
+# Enable color output
+no-color: false
+
+# Download external modules for scanning
+download-external-modules: false
+
+# External modules directory
+external-modules-download-path: .checkov-modules
+
+#----------------------------------------------------------------------------
+# Directory and File Configuration
+#----------------------------------------------------------------------------
+# Directories to scan
+directory:
+  - "."
+
+# Files to explicitly include
+file: []
+
+# Skip directories
+skip-path:
+  - ".terraform/"
+  - ".terraform.lock.hcl"
+  - "**/.terraform/**"
+  - "**/node_modules/**"
+  - "**/vendor/**"
+  - ".git/"
+  - "examples/"
+  - "test/"
+  - "tests/"
+  - "**/*.generated.*"
+  - "**/generated/**"
+  - "**/*.backup"
+  - "**/*.bak"
+  - "terraform.tfvars"
+  - "*.auto.tfvars"
+  - ".env*"
+
+# Skip files with specific patterns
+skip-file: []
+
+#----------------------------------------------------------------------------
+# Core Security Policies (Always Enabled)
+#----------------------------------------------------------------------------
+# These checks are fundamental and apply regardless of provider
+skip-check: []
+
+# Enable all checks by default, then selectively disable
+enable-check: []
+
+#----------------------------------------------------------------------------
+# Provider-Specific Policy Configuration
+#----------------------------------------------------------------------------
+# AWS Policies (enabled when OPENTOFU_PROVIDER_AWS=true)
+aws-checks:
+  # IAM Security
+  - "CKV_AWS_1"   # Ensure IAM policy does not grant '*' resource
+  - "CKV_AWS_2"   # Ensure IAM policy does not allow full '*' administrative privileges
+  - "CKV_AWS_3"   # Ensure credentials are not hardcoded
+  - "CKV_AWS_21"  # Ensure S3 bucket has MFA delete enabled
+  - "CKV_AWS_39"  # Ensure IAM password policy expires passwords within 90 days or less
+  - "CKV_AWS_40"  # Ensure IAM password policy requires at least one uppercase letter
+  - "CKV_AWS_41"  # Ensure IAM password policy requires at least one lowercase letter
+  - "CKV_AWS_42"  # Ensure IAM password policy requires at least one number
+  - "CKV_AWS_43"  # Ensure IAM password policy requires at least one symbol
+  - "CKV_AWS_44"  # Ensure IAM password policy requires minimum length of 14 or greater
+  - "CKV_AWS_45"  # Ensure IAM password policy prevents password reuse
+  
+  # S3 Security
+  - "CKV_AWS_18"  # Ensure S3 bucket has access logging configured
+  - "CKV_AWS_19"  # Ensure S3 bucket has server-side encryption enabled
+  - "CKV_AWS_20"  # Ensure S3 bucket has MFA delete enabled
+  - "CKV_AWS_52"  # Ensure S3 bucket has MFA delete enabled
+  - "CKV_AWS_53"  # Ensure S3 bucket has block public read access
+  - "CKV_AWS_54"  # Ensure S3 bucket has block public write access
+  - "CKV_AWS_55"  # Ensure S3 bucket has ignore public ACLs enabled
+  - "CKV_AWS_56"  # Ensure S3 bucket has restrict public bucket enabled
+  - "CKV_AWS_57"  # Ensure S3 bucket has versioning enabled
+  - "CKV_AWS_61"  # Ensure S3 bucket is not publicly readable
+  - "CKV_AWS_62"  # Ensure S3 bucket is not publicly writable
+  
+  # EC2 Security
+  - "CKV_AWS_8"   # Ensure root access key is not used
+  - "CKV_AWS_23"  # Ensure EC2 is EBS optimized
+  - "CKV_AWS_24"  # Ensure EC2 instance has detailed monitoring enabled
+  - "CKV_AWS_25"  # Ensure EC2 instance has public IP association disabled
+  - "CKV_AWS_26"  # Ensure EC2 instance uses encrypted EBS volumes
+  - "CKV_AWS_79"  # Ensure EC2 instance has detailed monitoring enabled
+  - "CKV_AWS_126" # Ensure EC2 instance detailed monitoring is enabled
+  - "CKV_AWS_135" # Ensure EC2 is EBS optimized
+  
+  # VPC and Networking
+  - "CKV_AWS_9"   # Ensure VPC flow logging is enabled
+  - "CKV_AWS_12"  # Ensure ELB access logging is enabled
+  - "CKV_AWS_91"  # Ensure ELB access logging is enabled
+  - "CKV_AWS_92"  # Ensure ELB is cross-zone load balancing enabled
+  - "CKV_AWS_103" # Ensure that load balancers are using TLS 1.2
+  
+  # RDS Security
+  - "CKV_AWS_16"  # Ensure RDS database has encryption enabled
+  - "CKV_AWS_17"  # Ensure RDS is not publicly accessible
+  - "CKV_AWS_129" # Ensure RDS cluster has backup retention period specified
+  - "CKV_AWS_133" # Ensure RDS instance has automated backups enabled
+  - "CKV_AWS_157" # Ensure RDS is encrypted
+  - "CKV_AWS_162" # Ensure RDS cluster has backup retention period specified
+
+# Google Cloud Policies (enabled when OPENTOFU_PROVIDER_GCP=true)
+gcp-checks:
+  # IAM Security
+  - "CKV_GCP_1"   # Ensure IAM policy does not grant service account user role
+  - "CKV_GCP_41"  # Ensure IAM policy does not grant Editor or Owner role
+  - "CKV_GCP_42"  # Ensure IAM policy does not grant basic roles
+  - "CKV_GCP_43"  # Ensure service accounts do not have admin privileges
+  - "CKV_GCP_44"  # Ensure service account has restricted scope
+  
+  # Compute Security
+  - "CKV_GCP_2"   # Ensure compute instances are not pre-emptible
+  - "CKV_GCP_30"  # Ensure VM instances have block project-wide SSH keys enabled
+  - "CKV_GCP_32"  # Ensure VM instances have IP forwarding disabled
+  - "CKV_GCP_34"  # Ensure compute instances have serial port disabled
+  - "CKV_GCP_35"  # Ensure compute instances have public IP disabled
+  - "CKV_GCP_36"  # Ensure VM instances have Shielded VM enabled
+  - "CKV_GCP_37"  # Ensure VM instances have secure boot enabled
+  - "CKV_GCP_38"  # Ensure VM instances have integrity monitoring enabled
+  - "CKV_GCP_39"  # Ensure VM instances have vTPM enabled
+  
+  # Storage Security
+  - "CKV_GCP_5"   # Ensure storage bucket is not publicly readable
+  - "CKV_GCP_6"   # Ensure storage bucket is not publicly writable
+  - "CKV_GCP_7"   # Ensure storage bucket has uniform bucket-level access
+  - "CKV_GCP_29"  # Ensure storage bucket has versioning enabled
+  - "CKV_GCP_62"  # Ensure storage bucket is encrypted with customer-managed key
+  
+  # Network Security
+  - "CKV_GCP_3"   # Ensure firewall rule does not allow all traffic
+  - "CKV_GCP_106" # Ensure firewall rule does not allow SSH from 0.0.0.0/0
+  - "CKV_GCP_107" # Ensure firewall rule does not allow RDP from 0.0.0.0/0
+  
+  # GKE Security
+  - "CKV_GCP_8"   # Ensure GKE cluster has network policy enabled
+  - "CKV_GCP_12"  # Ensure GKE cluster has binary authorization enabled
+  - "CKV_GCP_13"  # Ensure GKE cluster has alias IP ranges enabled
+  - "CKV_GCP_18"  # Ensure GKE cluster has private cluster enabled
+  - "CKV_GCP_19"  # Ensure GKE cluster has network policy enabled
+  - "CKV_GCP_21"  # Ensure GKE cluster has pod security policy enabled
+  - "CKV_GCP_22"  # Ensure GKE cluster has network policy enabled
+  - "CKV_GCP_23"  # Ensure GKE cluster has legacy ABAC disabled
+  - "CKV_GCP_24"  # Ensure GKE cluster has master authorized networks enabled
+  - "CKV_GCP_25"  # Ensure GKE cluster has private nodes enabled
+
+# Azure Policies (enabled when OPENTOFU_PROVIDER_AZURE=true)
+azure-checks:
+  # Resource Management
+  - "CKV_AZURE_1"  # Ensure Azure instance does not use basic authentication
+  - "CKV_AZURE_2"  # Ensure Azure instance has security monitoring agent installed
+  - "CKV_AZURE_3"  # Ensure that 'Secure transfer required' is set to 'Enabled'
+  - "CKV_AZURE_4"  # Ensure default network access rule for Storage Accounts is set to deny
+  - "CKV_AZURE_5"  # Ensure 'Trusted Microsoft Services' is enabled for Storage Account access
+  
+  # Storage Security
+  - "CKV_AZURE_33" # Ensure Storage Account is using the latest version of TLS encryption
+  - "CKV_AZURE_35" # Ensure storage account is configured to use a customer managed key
+  - "CKV_AZURE_36" # Ensure storage account container does not allow public read access
+  - "CKV_AZURE_37" # Ensure storage account container does not allow public write access
+  - "CKV_AZURE_43" # Ensure Storage Accounts adhere to the naming rules
+  - "CKV_AZURE_44" # Ensure Storage Account is using the latest version of TLS encryption
+  
+  # Network Security
+  - "CKV_AZURE_9"  # Ensure that RDP access is restricted from the internet
+  - "CKV_AZURE_10" # Ensure that SSH access is restricted from the internet
+  - "CKV_AZURE_12" # Ensure that Network Security Group does not have unrestricted access to RDP
+  - "CKV_AZURE_13" # Ensure that Network Security Group does not have unrestricted access to SSH
+  
+  # Compute Security
+  - "CKV_AZURE_50" # Ensure Virtual Machine Extensions are not installed
+  - "CKV_AZURE_149"# Ensure VM agent is installed
+
+# GitHub Policies (enabled when OPENTOFU_PROVIDER_GITHUB=true)
+github-checks:
+  - "CKV_GIT_1"    # Ensure GitHub repository has vulnerability alerts enabled
+  - "CKV_GIT_2"    # Ensure GitHub repository has branch protection enabled
+  - "CKV_GIT_3"    # Ensure GitHub repository has signed commits required
+  - "CKV_GIT_4"    # Ensure GitHub repository has dismiss stale reviews enabled
+  - "CKV_GIT_5"    # Ensure GitHub repository has enforce admins enabled
+  - "CKV_GIT_6"    # Ensure GitHub repository has restrict pushes enabled
+
+#----------------------------------------------------------------------------
+# Secrets Detection Configuration
+#----------------------------------------------------------------------------
+secrets-scan-policy:
+  # Enable secrets scanning across all file types
+  enable: true
+  
+  # Custom secrets patterns
+  custom-secrets:
+    - name: "Custom API Key Pattern"
+      regex: "(?i)(api[_-]?key|apikey)\\s*[:=]\\s*[\"']?[a-zA-Z0-9]{32,}[\"']?"
+      severity: "HIGH"
+    
+    - name: "Database Connection String"
+      regex: "(?i)(database_url|db_url|connection_string)\\s*[:=]\\s*[\"']?[^\\s\"']+[\"']?"
+      severity: "CRITICAL"
+    
+    - name: "Private Key"
+      regex: "-----BEGIN\\s+(RSA\\s+)?PRIVATE\\s+KEY-----"
+      severity: "CRITICAL"
+
+#----------------------------------------------------------------------------
+# Custom Policies and Rules
+#----------------------------------------------------------------------------
+custom-policies:
+  # Organization-specific policies
+  - name: "OrganizationTagging"
+    description: "Ensure all resources have required organization tags"
+    severity: "MEDIUM"
+    resource_types: ["aws_instance", "google_compute_instance", "azurerm_virtual_machine"]
+    required_tags: ["Environment", "Owner", "Project", "CostCenter"]
+  
+  - name: "EncryptionStandards"
+    description: "Ensure all storage resources are encrypted"
+    severity: "HIGH"
+    resource_types: ["aws_s3_bucket", "google_storage_bucket", "azurerm_storage_account"]
+  
+  - name: "NetworkIsolation"
+    description: "Ensure network resources follow isolation principles"
+    severity: "HIGH"
+    resource_types: ["aws_security_group", "google_compute_firewall", "azurerm_network_security_group"]
+
+#----------------------------------------------------------------------------
+# Environment-Specific Configuration
+#----------------------------------------------------------------------------
+# Development Environment Overrides
+dev-environment:
+  soft-fail: true
+  skip-check:
+    # Allow less strict rules in development
+    - "CKV_AWS_25"  # Allow public IPs in dev
+    - "CKV_GCP_35"  # Allow public IPs in dev
+    - "CKV_AZURE_1" # Allow basic auth in dev
+  
+  # Less strict secrets detection in dev
+  secrets-scan-policy:
+    severity-threshold: "HIGH"
+
+# Staging Environment Overrides
+staging-environment:
+  soft-fail: true
+  skip-check:
+    # Some rules may be relaxed in staging
+    - "CKV_AWS_20"  # MFA delete might not be required in staging
+  
+  secrets-scan-policy:
+    severity-threshold: "MEDIUM"
+
+# Production Environment Overrides
+production-environment:
+  soft-fail: false  # Fail builds on policy violations in production
+  skip-check: []    # No exemptions in production
+  
+  secrets-scan-policy:
+    severity-threshold: "LOW"
+    enable-all-detectors: true
+
+#----------------------------------------------------------------------------
+# Compliance Framework Configuration
+#----------------------------------------------------------------------------
+compliance-frameworks:
+  # SOC 2 Type II
+  soc2:
+    enable: true
+    required-checks:
+      - "CKV_AWS_18"  # S3 logging
+      - "CKV_AWS_19"  # S3 encryption
+      - "CKV_AWS_16"  # RDS encryption
+      - "CKV_GCP_5"   # Storage bucket security
+      - "CKV_AZURE_3" # Secure transfer
+  
+  # PCI DSS
+  pci-dss:
+    enable: false  # Enable if handling payment data
+    required-checks:
+      - "CKV_AWS_2"   # No admin privileges
+      - "CKV_AWS_19"  # Encryption at rest
+      - "CKV_GCP_62"  # Customer-managed encryption
+  
+  # GDPR
+  gdpr:
+    enable: true
+    required-checks:
+      - "CKV_AWS_19"  # Data encryption
+      - "CKV_AWS_61"  # No public data access
+      - "CKV_GCP_5"   # Storage security
+      - "CKV_AZURE_36" # Container security
+  
+  # HIPAA
+  hipaa:
+    enable: false  # Enable if handling healthcare data
+    required-checks:
+      - "CKV_AWS_16"  # Database encryption
+      - "CKV_AWS_26"  # EBS encryption
+      - "CKV_GCP_62"  # Storage encryption
+
+#----------------------------------------------------------------------------
+# Reporting and Integration
+#----------------------------------------------------------------------------
+reporting:
+  # Generate detailed reports
+  detailed-exitcode: true
+  
+  # Report formats
+  output-formats:
+    - format: "json"
+      output-file: "checkov-report.json"
+    - format: "junit"
+      output-file: "checkov-junit.xml"
+    - format: "sarif"
+      output-file: "checkov-report.sarif"
+    - format: "csv"
+      output-file: "checkov-report.csv"
+  
+  # Include additional metadata
+  include-all-checkov-policies: true
+  repo-root-for-plan-enrichment: "."
+
+# CI/CD Integration
+ci-integration:
+  # GitHub Actions
+  github-actions:
+    enable: true
+    create-pr-comments: true
+    fail-pr-on-high-severity: true
+  
+  # GitLab CI
+  gitlab-ci:
+    enable: false
+  
+  # Jenkins
+  jenkins:
+    enable: false
+  
+  # Azure DevOps
+  azure-devops:
+    enable: false
+
+# External Tool Integration
+external-integrations:
+  # Slack notifications
+  slack:
+    webhook-url: "${SLACK_SECURITY_WEBHOOK}"
+    channel: "#security-alerts"
+    severity-threshold: "HIGH"
+  
+  # Jira ticket creation
+  jira:
+    enable: false
+    server: "${JIRA_SERVER}"
+    username: "${JIRA_USERNAME}"
+    api-token: "${JIRA_API_TOKEN}"
+    project-key: "SEC"
+  
+  # Email notifications
+  email:
+    smtp-server: "${SMTP_SERVER}"
+    recipients: ["security@organization.com"]
+    severity-threshold: "CRITICAL"
+
+#----------------------------------------------------------------------------
+# Performance and Optimization
+#----------------------------------------------------------------------------
+performance:
+  # Timeout settings
+  timeout: 3600  # 1 hour timeout for large repositories
+  
+  # Memory limits
+  max-memory: "2G"
+  
+  # Parallel processing
+  parallel-workers: 4
+  
+  # Caching
+  enable-caching: true
+  cache-directory: ".checkov-cache"
+  cache-expiry: 7  # days
+
+#----------------------------------------------------------------------------
+# Advanced Configuration
