@@ -1,11 +1,11 @@
 #----------------------------------------------------------------------------
-# .gitignore
+# OpenTofu Repository Template - Comprehensive .gitignore
 #----------------------------------------------------------------------------
 
-# Created by https://www.toptal.com/developers/gitignore/api/terraform
-# Edit at https://www.toptal.com/developers/gitignore?templates=terraform
+#----------------------------------------------------------------------------
+# OpenTofu/Terraform Files
+#----------------------------------------------------------------------------
 
-### Terraform ###
 # Local .terraform directories
 **/.terraform/*
 
@@ -17,15 +17,11 @@
 crash.log
 crash.*.log
 
-# Exclude all .tfvars files, which are likely to contain sensitive data, such as
-# password, private keys, and other secrets. These should not be part of version
-# control as they are data points which are potentially sensitive and subject
-# to change depending on the environment.
+# Exclude all .tfvars files, which are likely to contain sensitive data
 *.tfvars
 *.tfvars.json
 
-# Ignore override files as they are usually used to override resources locally and so
-# are not checked in
+# Ignore override files
 override.tf
 override.tf.json
 *_override.tf
@@ -34,11 +30,303 @@ override.tf.json
 # Include override files you do wish to add to version control using negated pattern
 # !example_override.tf
 
-# Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
-# example: *tfplan*
-
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
 
-# End of https://www.toptal.com/developers/gitignore/api/terraform
+# Lock files (comment out if you want to commit them)
+.terraform.lock.hcl
+
+# OpenTofu specific
+.tofu/
+*.tfplan
+*.tfplan.*
+
+#----------------------------------------------------------------------------
+# Environment and Configuration Files
+#----------------------------------------------------------------------------
+
+# Environment files (keep .env.example)
+.env
+.env.local
+.env.*.local
+
+# Local direnv files
+.envrc.local
+
+# IDE-specific environment files
+.vscode/settings.local.json
+
+#----------------------------------------------------------------------------
+# Build and Task Runner Files
+#----------------------------------------------------------------------------
+
+# Task runner outputs
+.task/
+
+# Build outputs
+dist/
+build/
+out/
+
+# Log files
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+#----------------------------------------------------------------------------
+# Security and Scanning Tools
+#----------------------------------------------------------------------------
+
+# TruffleHog outputs
+trufflehog-report.*
+
+# tfsec outputs
+tfsec-report.*
+.tfsec/
+
+# Checkov outputs
+checkov-report.*
+.checkov/
+
+# Infracost outputs
+infracost-report.*
+.infracost/
+
+# SAST tool outputs
+.semgrep/
+.snyk/
+
+#----------------------------------------------------------------------------
+# Development Tools
+#----------------------------------------------------------------------------
+
+# Pre-commit
+.pre-commit-config.local.yaml
+
+# Testing
+test-results/
+coverage/
+.nyc_output/
+
+# Linting outputs
+.tflint.d/
+.markdownlint/
+
+# Documentation generation
+docs/generated/
+.terraform-docs/
+
+#----------------------------------------------------------------------------
+# IDE and Editor Files
+#----------------------------------------------------------------------------
+
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Local History for Visual Studio Code
+.history/
+.ionide/
+
+# JetBrains IDEs
+.idea/
+*.swp
+*.swo
+
+# Vim
+*~
+.*.swp
+.*.swo
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+#----------------------------------------------------------------------------
+# Operating System Files
+#----------------------------------------------------------------------------
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+*.temp
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+#----------------------------------------------------------------------------
+# Package Managers and Dependencies
+#----------------------------------------------------------------------------
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.eslintcache
+.stylelintcache
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Ruby
+/.bundle/
+/vendor/bundle
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+
+# Go
+/vendor/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+
+#----------------------------------------------------------------------------
+# Cloud Provider Specific
+#----------------------------------------------------------------------------
+
+# AWS
+.aws/
+aws-exports.js
+
+# Google Cloud
+.gcp/
+gcloud/
+application_default_credentials.json
+
+# Azure
+.azure/
+
+# Kubernetes
+.kube/
+*.kubeconfig
+
+#----------------------------------------------------------------------------
+# Backup and Archive Files
+#----------------------------------------------------------------------------
+
+# Backup files
+*.bak
+*.backup
+*.old
+*.orig
+*.HOLD
+
+# Archive files
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.tar.bz2
+*.tbz2
+*.tar.xz
+*.txz
+*.7z
+*.rar
+
+#----------------------------------------------------------------------------
+# Template and Boilr Specific
+#----------------------------------------------------------------------------
+
+# Boilr generated files
+.boilr/
+boilr-values.json
+
+# Template processing
+.template/
+template-output/
+
+#----------------------------------------------------------------------------
+# Custom Additions
+# Add project-specific ignores below this line
+#----------------------------------------------------------------------------
+
+# Example: Ignore specific configuration files
+# config/local.yaml
+# secrets/
+
+# Example: Ignore generated documentation
+# docs/api/

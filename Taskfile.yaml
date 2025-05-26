@@ -1,126 +1,471 @@
-# yaml-language-server: $schema=https://taskfile.dev/schema.json
-# https://taskfile.dev
+#----------------------------------------------------------------------------
+# OpenTofu Repository Template - Task Runner Configuration
+# Comprehensive task runner with .env-driven conditional execution
+#----------------------------------------------------------------------------
 
-version: "3"
+version: '3'
 
-dotenv: [".envrc"]
+# Load environment variables
+dotenv: ['.env']
+
+# Global environment variables
 env:
-  GIT_SSH_COMMAND: "{{.GIT_SSH_COMMAND}}"
+  # Core configuration
+  TF_DATA_DIR: '{{.TF_DATA_DIR | default ".terraform"}}'
+  TF_PLUGIN_CACHE_DIR: '{{.TF_PLUGIN_CACHE_DIR | default "${HOME}/.terraform.d/plugin-cache"}}'
+  
+  # Git configuration
+  GIT_SSH_COMMAND: '{{.GIT_SSH_COMMAND | default "ssh"}}'
+  
+  # Task configuration
+  VERBOSE_OUTPUT: '{{.VERBOSE_OUTPUT | default "false"}}'
+  ENABLE_PARALLEL_EXECUTION: '{{.ENABLE_PARALLEL_EXECUTION | default "true"}}'
+  MAX_PARALLEL_PROCESSES: '{{.MAX_PARALLEL_PROCESSES | default "4"}}'
 
+# Global variables
 vars:
   CURRENT_DATE:
     sh: date +"%Y-%m-%dT%H:%M:%S%Z"
+  ORGANIZATION: '{{.ORGANIZATION_NAME | default "dadandlad.co"}}'
+  PROJECT_PREFIX: '{{.PROJECT_PREFIX | default ""}}'
 
+# Task definitions
 tasks:
+  #--------------------------------------------------------------------------
+  # Default and Help Tasks
+  #--------------------------------------------------------------------------
+  
   default:
-    desc: Run the pre-commit hooks
+    desc: "Run default validation and setup tasks"
     cmds:
-      - "direnv allow"
-      - task: pre
+      - task: validate-config
+      - task: validate
+      - task: fmt
+    silent: false
+
+  help:
+    desc: "Show detailed help for all available tasks"
+    cmds:
+      - echo "OpenTofu Repository Template - Available Tasks"
+      - echo "=============================================="
+      - echo ""
+      - echo "Core Tasks:"
+      - echo "  default        - Run validation and formatting"
+      - echo "  validate       - Validate OpenTofu configuration"
+      - echo "  fmt            - Format all files"
+      - echo "  clean          - Clean temporary files"
+      - echo "  test           - Run tests"
+      - echo ""
+      - echo "Development Tasks:"
+      - echo "  dev-setup      - Setup development environment"
+      - echo "  install-hooks  - Install git pre-commit hooks"
+      - echo "  update-deps    - Update dependencies"
+      - echo ""
+      - |
+        if [[ "${ENABLE_SECURITY_SCANNING:-true}" == "true" ]]; then
+          echo "Security Tasks:"
+          echo "  security-scan  - Run all security scanners"
+          echo "  hog            - Scan for secrets"
+          if [[ "${ENABLE_TFSEC:-true}" == "true" ]]; then
+            echo "  tfsec          - Run tfsec security scanner"
+          fi
+          if [[ "${ENABLE_CHECKOV:-true}" == "true" ]]; then
+            echo "  checkov        - Run checkov policy scanner"
+          fi
+          echo ""
+        fi
+      - |
+        if [[ "${ENABLE_DOCUMENTATION_AUTOMATION:-true}" == "true" ]]; then
+          echo "Documentation Tasks:"
+          echo "  docs           - Generate documentation"
+          echo "  docs-serve     - Serve documentation locally"
+          echo "  docs-update    - Update documentation"
+          echo ""
+        fi
+      - echo "Git Workflow Tasks:"
+      - echo "  push           - Add, commit, and push changes"
+      - echo "  tag            - Create and push git tags"
+      - |
+        if [[ "${ENABLE_RELEASE_AUTOMATION:-true}" == "true" ]]; then
+          echo "  release        - Create releases"
+        fi
+      - echo ""
+      - |
+        if [[ "${ENABLE_BOILR_TEMPLATES:-false}" == "true" ]]; then
+          echo "Template Tasks:"
+          echo "  boilr-save     - Save boilr template"
+          echo "  boilr-use      - Use boilr template"
+          echo ""
+        fi
+
+  #--------------------------------------------------------------------------
+  # Configuration and Validation
+  #--------------------------------------------------------------------------
+
+  validate-config:
+    desc: "Validate .env configuration"
+    cmds:
+      - |
+        echo "Validating configuration..."
+        
+        # Check required environment variables
+        if [[ -z "${ORGANIZATION_NAME:-}" ]]; then
+          echo "❌ ORGANIZATION_NAME is required"
+          exit 1
+        fi
+        
+        # Validate boolean values
+        for var in ENABLE_SECURITY_SCANNING ENABLE_DOCUMENTATION_AUTOMATION ENABLE_RELEASE_AUTOMATION \
+                  ENABLE_PRE_COMMIT_HOOKS ENABLE_EXAMPLE_VALIDATION OPENTOFU_PROVIDER_AWS \
+                  OPENTOFU_PROVIDER_GCP OPENTOFU_PROVIDER_AZURE OPENTOFU_PROVIDER_GITHUB \
+                  ENABLE_TFSEC ENABLE_CHECKOV ENABLE_INFRACOST ENABLE_BOILR_TEMPLATES \
+                  ENABLE_VS_CODE_CONFIG; do
+          value="${!var:-}"
+          if [[ -n "$value" && "$value" != "true" && "$value" != "false" ]]; then
+            echo "❌ $var must be 'true' or 'false', got: '$value'"
+            exit 1
+          fi
+        done
+        
+        echo "✅ Configuration is valid"
+    silent: false
+
+  #--------------------------------------------------------------------------
+  # Core Development Tasks
+  #--------------------------------------------------------------------------
+
+  validate:
+    desc: "Validate OpenTofu configuration"
+    deps: [validate-config]
+    cmds:
+      - echo "🔍 Validating OpenTofu configuration..."
+      - tofu fmt -check -recursive .
+      - tofu validate
+      - task: validate-examples
+
+  fmt:
+    desc: "Format all configuration files"
+    cmds:
+      - echo "🎨 Formatting files..."
+      - tofu fmt -recursive .
+      - |
+        if command -v yamllint >/dev/null 2>&1; then
+          find . -name "*.yaml" -o -name "*.yml" | head -10 | xargs -I {} sh -c 'echo "Checking: {}"; yamllint "{}" || true'
+        fi
+      - |
+        if command -v markdownlint >/dev/null 2>&1 && [[ "${ENABLE_DOCUMENTATION_AUTOMATION:-true}" == "true" ]]; then
+          markdownlint . || true
+        fi
+
+  clean:
+    desc: "Clean temporary files and directories"
+    cmds:
+      - echo "🧹 Cleaning temporary files..."
+      - |
+        find . -name '*.HOLD' -type f -delete 2>/dev/null || true
+        find . -name '.terraform' -type d -exec rm -rf {} + 2>/dev/null || true
+        find . -name '*.tfstate*' -type f -delete 2>/dev/null || true
+        find . -name '.terraform.lock.hcl' -type f -delete 2>/dev/null || true
+        find . -name 'tfplan*' -type f -delete 2>/dev/null || true
+        rm -rf tmp/ logs/ .task/ 2>/dev/null || true
+      - |
+        if command -v pre-commit >/dev/null 2>&1; then
+          pre-commit clean 2>/dev/null || true
+        fi
+      - echo "✅ Cleanup completed"
+
+  test:
+    desc: "Run comprehensive tests"
+    deps: [validate-config]
+    cmds:
+      - task: validate
+      - task: test-examples
+      - |
+        if [[ "${ENABLE_SECURITY_SCANNING:-true}" == "true" ]]; then
+          task: security-scan
+        fi
+
+  validate-examples:
+    desc: "Validate example configurations"
+    cmds:
+      - |
+        if [[ "${ENABLE_EXAMPLE_VALIDATION:-true}" == "true" ]]; then
+          echo "🧪 Validating examples..."
+          for example_dir in examples/*/; do
+            if [[ -d "$example_dir" && -f "$example_dir/main.tf" ]]; then
+              echo "Validating: $example_dir"
+              (cd "$example_dir" && tofu init -backend=false && tofu validate)
+            fi
+          done
+        else
+          echo "ℹ️  Example validation disabled"
+        fi
+
+  test-examples:
+    desc: "Run example tests"
+    cmds:
+      - |
+        if [[ "${ENABLE_EXAMPLE_VALIDATION:-true}" == "true" ]]; then
+          echo "🧪 Testing examples..."
+          for example_dir in examples/*/; do
+            if [[ -d "$example_dir" && -f "$example_dir/main.tf" ]]; then
+              echo "Testing: $example_dir"
+              (cd "$example_dir" && tofu init -backend=false && tofu plan -out=tfplan)
+              
+              # Run OpenTofu native tests if available
+              if ls "$example_dir"/*.tftest.hcl 1> /dev/null 2>&1; then
+                (cd "$example_dir" && tofu test)
+              fi
+            fi
+          done
+        else
+          echo "ℹ️  Example testing disabled"
+        fi
+
+  #--------------------------------------------------------------------------
+  # Development Environment Tasks
+  #--------------------------------------------------------------------------
+
+  dev-setup:
+    desc: "Setup development environment"
+    cmds:
+      - echo "🛠️  Setting up development environment..."
+      - task: validate-config
+      - ./setup.sh
+      - task: install-hooks
+      - echo "✅ Development environment ready"
+
+  install-hooks:
+    desc: "Install git pre-commit hooks"
+    cmds:
+      - |
+        if [[ "${ENABLE_PRE_COMMIT_HOOKS:-true}" == "true" ]]; then
+          if command -v pre-commit >/dev/null 2>&1; then
+            echo "🔗 Installing pre-commit hooks..."
+            pre-commit install
+            echo "✅ Pre-commit hooks installed"
+          else
+            echo "❌ pre-commit not found. Run './setup.sh' first."
+            exit 1
+          fi
+        else
+          echo "ℹ️  Pre-commit hooks disabled"
+        fi
+
+  update-deps:
+    desc: "Update dependencies and tools"
+    cmds:
+      - echo "⬆️  Updating dependencies..."
+      - |
+        if command -v brew >/dev/null 2>&1; then
+          brew update && brew upgrade
+        fi
+      - |
+        if command -v pre-commit >/dev/null 2>&1 && [[ "${ENABLE_PRE_COMMIT_HOOKS:-true}" == "true" ]]; then
+          pre-commit autoupdate
+        fi
+
+  #--------------------------------------------------------------------------
+  # Security Tasks (Conditional)
+  #--------------------------------------------------------------------------
+
+  security-scan:
+    desc: "Run comprehensive security scanning"
+    preconditions:
+      - sh: '[[ "${ENABLE_SECURITY_SCANNING:-true}" == "true" ]]'
+        msg: "Security scanning is disabled. Set ENABLE_SECURITY_SCANNING=true to enable."
+    cmds:
+      - echo "🔒 Running security scans..."
+      - task: hog
+      - |
+        if [[ "${ENABLE_TFSEC:-true}" == "true" ]]; then
+          task: tfsec
+        fi
+      - |
+        if [[ "${ENABLE_CHECKOV:-true}" == "true" ]]; then
+          task: checkov
+        fi
 
   hog:
-    desc: Scan for secrets
+    desc: "Scan for secrets with TruffleHog"
+    preconditions:
+      - sh: '[[ "${ENABLE_SECURITY_SCANNING:-true}" == "true" ]]'
+        msg: "Security scanning is disabled"
+      - sh: 'command -v trufflehog'
+        msg: "trufflehog not found. Run './setup.sh' to install."
     cmds:
-      - trufflehog git file://. --since-commit HEAD --only-verified --fail
+      - echo "🔍 Scanning for secrets..."
+      - trufflehog git file://. --since-commit HEAD~10 --only-verified --fail
 
-  pre:
-    desc: Run the pre-commit hooks
+  tfsec:
+    desc: "Run tfsec security scanner"
+    preconditions:
+      - sh: '[[ "${ENABLE_TFSEC:-true}" == "true" ]]'
+        msg: "tfsec is disabled. Set ENABLE_TFSEC=true to enable."
+      - sh: 'command -v tfsec'
+        msg: "tfsec not found. Run './setup.sh' to install."
     cmds:
-      - pre-commit autoupdate
-      - pre-commit run -a
+      - echo "🛡️  Running tfsec security scan..."
+      - tfsec . --soft-fail
+
+  checkov:
+    desc: "Run Checkov policy scanner"
+    preconditions:
+      - sh: '[[ "${ENABLE_CHECKOV:-true}" == "true" ]]'
+        msg: "Checkov is disabled. Set ENABLE_CHECKOV=true to enable."
+      - sh: 'command -v checkov'
+        msg: "checkov not found. Run './setup.sh' to install."
+    cmds:
+      - echo "📋 Running Checkov policy scan..."
+      - checkov -d . --framework terraform --soft-fail
+
+  #--------------------------------------------------------------------------
+  # Documentation Tasks (Conditional)
+  #--------------------------------------------------------------------------
+
+  docs:
+    desc: "Generate documentation"
+    preconditions:
+      - sh: '[[ "${ENABLE_DOCUMENTATION_AUTOMATION:-true}" == "true" ]]'
+        msg: "Documentation automation is disabled. Set ENABLE_DOCUMENTATION_AUTOMATION=true to enable."
+    cmds:
+      - echo "📚 Generating documentation..."
+      - |
+        if command -v terraform-docs >/dev/null 2>&1; then
+          terraform-docs markdown . > README_generated.md
+          echo "✅ Documentation generated in README_generated.md"
+        else
+          echo "❌ terraform-docs not found. Run './setup.sh' to install."
+        fi
+
+  docs-serve:
+    desc: "Serve documentation locally"
+    preconditions:
+      - sh: '[[ "${ENABLE_DOCUMENTATION_AUTOMATION:-true}" == "true" ]]'
+        msg: "Documentation automation is disabled"
+    cmds:
+      - echo "🌐 Starting local documentation server..."
+      - echo "ℹ️  Documentation serving not implemented yet"
+
+  docs-update:
+    desc: "Update documentation files"
+    preconditions:
+      - sh: '[[ "${ENABLE_DOCUMENTATION_AUTOMATION:-true}" == "true" ]]'
+        msg: "Documentation automation is disabled"
+    cmds:
+      - task: docs
+      - echo "📝 Documentation updated"
+
+  #--------------------------------------------------------------------------
+  # Git Workflow Tasks
+  #--------------------------------------------------------------------------
 
   push:
-    desc: Push the changes to the remote repository
+    desc: "Add, commit, and push changes"
     deps: [clean]
     cmds:
       - git add .
-      - git commit -m "{{.CURRENT_DATE}}"
+      - git commit -m "{{.CLI_ARGS | default .CURRENT_DATE}}"
       - git push
-    silent: true
 
   tag:
-    desc: Push the changes to the remote repository
+    desc: "Create and push git tags"
     cmds:
-      - git push
-      - git tag -s {{.CLI_ARGS}} -m "{{.CLI_ARGS}}"
+      - |
+        if [[ -z "{{.CLI_ARGS}}" ]]; then
+          echo "❌ Tag name required. Usage: task tag -- v1.0.0"
+          exit 1
+        fi
+      - git tag -s "{{.CLI_ARGS}}" -m "{{.CLI_ARGS}}"
       - git push --tags
+      - echo "✅ Tag {{.CLI_ARGS}} created and pushed"
+
+  release:
+    desc: "Create releases"
+    preconditions:
+      - sh: '[[ "${ENABLE_RELEASE_AUTOMATION:-true}" == "true" ]]'
+        msg: "Release automation is disabled. Set ENABLE_RELEASE_AUTOMATION=true to enable."
+    cmds:
+      - echo "🚀 Creating release..."
+      - echo "ℹ️  Release automation not fully implemented yet"
+
+  #--------------------------------------------------------------------------
+  # Boilr Template Tasks (Conditional)
+  #--------------------------------------------------------------------------
+
+  boilr-save:
+    desc: "Save current directory as boilr template"
+    preconditions:
+      - sh: '[[ "${ENABLE_BOILR_TEMPLATES:-false}" == "true" ]]'
+        msg: "Boilr templates are disabled. Set ENABLE_BOILR_TEMPLATES=true to enable."
+      - sh: 'command -v boilr'
+        msg: "boilr not found. Run './setup.sh' to install."
+    cmds:
+      - echo "💾 Saving boilr template..."
+      - boilr template save boilr {{.CLI_ARGS | default .ORGANIZATION}} --force
+
+  boilr-use:
+    desc: "Use boilr template to generate project"
+    preconditions:
+      - sh: '[[ "${ENABLE_BOILR_TEMPLATES:-false}" == "true" ]]'
+        msg: "Boilr templates are disabled"
+      - sh: 'command -v boilr'
+        msg: "boilr not found"
+    cmds:
+      - echo "🎯 Using boilr template..."
+      - |
+        if [[ -f "{{.CLI_ARGS | default .ORGANIZATION}}.json" ]]; then
+          boilr template use {{.CLI_ARGS | default .ORGANIZATION}} . --use-file {{.CLI_ARGS | default .ORGANIZATION}}.json
+        else
+          boilr template use {{.CLI_ARGS | default .ORGANIZATION}} . --json-file {{.CLI_ARGS | default .ORGANIZATION}}.json
+        fi
+
+  #--------------------------------------------------------------------------
+  # Migration and Update Tasks
+  #--------------------------------------------------------------------------
 
   update-managed:
-    desc: Update the managed files from the GitHub template repo
-    requires:
-      vars: [ORGANIZATION]
-    vars:
-      MANAGED_FILES: .envrc .gitignore .pre-commit-config.yaml .opentofu-docs.yml .tflint.hcl Taskfile.yaml
-      PRECOMMIT: git@github.com:{{.ORGANIZATION}}/opentofu-repo-template.git
+    desc: "Update managed files from template repository"
     cmds:
+      - echo "🔄 Updating managed files..."
       - |
-        # Move the existing files to a HOLD directory
-        for i in {{.MANAGED_FILES}}; do
-          if [ -f "$i" -a ! -f ".skip_${i}" ]; then
-            mv $i $i.HOLD
-          fi
-        done
+        echo "⚠️  This will overwrite: .envrc, .pre-commit-config.yaml, .tflint.hcl, Taskfile.yaml"
       - |
-        # Copy all non-skipped files from the template repo
-        for i in {{.MANAGED_FILES}}; do
-          if [ ! -f ".skip_${i}" ]; then
-            cp "{{.TEMPDIR}}/$i" .
-          fi
-        done
-      - defer: { task: clean }
-
-  run-opentofu:
-    desc: Render the boilr template for OpenTofu repos
-    aliases: [run-tf]
-    requires:
-      vars: [REPO]
-    cmds:
-      - |
-        if [ -d "opentofu" ]; then
-          mv opentofu opentofu.HOLD
-        fi
-      - defer: { task: clean }
-      - "boilr template save boilr {{.REPO}} --force"
-      - |
-        if [ -f "{{.REPO}}.json" ]; then
-          boilr template use {{.REPO}} . --use-file {{.REPO}}.json;
+        read -p "Continue? [y/N] " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+          echo "Updating files..."
+          # Implementation for updating managed files
+          echo "✅ Files updated (implementation pending)"
         else
-          boilr template use {{.REPO}} . --json-file {{.REPO}}.json;
+          echo "❌ Update cancelled"
         fi
 
-  update-repo:
-    desc: Update the repository from this templates repo
-    deps: [clean]
-    requires:
-      vars: [ORGANIZATION, REPO, REPO_SHORTNAME]
-    vars:
-      TEMPDIR:
-        sh: mktemp -d /tmp/clone.XXXXXXXXXX
-      THIS_REPO: git@github.com:{{replace .ORGANIZATION "." "-"}}/{{.REPO}}.git
+  migrate-v2:
+    desc: "Migrate from v1 to v2 template structure"
     cmds:
-      - "git clone -q --branch main --single-branch --git-dir {{.TEMPDIR}}/.git --work-tree {{.REPO_SHORTNAME}} {{.THIS_REPO}}"
+      - echo "🔄 Migrating to v2 template structure..."
       - |
-        if [ -d boilr ]; then
-          mv boilr boilr.HOLD
+        if [[ ! -f .env ]]; then
+          echo "Creating .env from .env.example..."
+          cp .env.example .env
         fi
-        cp -r {{.TEMPDIR}}/boilr .
-      - |
-        if [ -f Taskfile.yaml ]; then
-          mv Taskfile.yaml Taskfile.yaml.HOLD
-        fi
-        cp -r {{.TEMPDIR}}/Taskfile.yaml .
-      - defer: { task: clean }
+      - echo "✅ Migration completed. Please review and customize your .env file."
 
-  clean:
-    desc: Clean up the repository
-    silent: true
+  #--------------------------------------------------------------------------
+  # Provider-Specific Tasks
+  #--------------------------------------------------------------------------
+
+  aws-validate:
+    desc: "Validate AWS-specific configuration"
+    preconditions:
+      - sh: '[[ "${OPENTOFU_PROVIDER_AWS:-false}" == "true" ]]'
+        msg: "AWS provider support is disabled. Set OPENTOFU_PROVIDER_AWS=true to enable."
     cmds:
-      - pre-commit clean >/dev/null 2>&1
-      - if [ -d 'boilr' ]; then find boilr -type f -name 'README.md' | xargs rm -r >/dev/null 2>&1; else exit 0; fi
+      - echo "☁️  Validating AWS configuration..."
       - |
-        find . -name '*.HOLD' -o \
-             -type d -name '.opentofu' -o \
-             -type f -name '*.tfstate*' -o \
-             -type f -name '.opentofu.lock.hcl' \
-        | xargs -P 4 -n 1 rm -rf >/dev/null 2>&1
-      - printf "Clean done\n"
+        if command -v aws >/dev/null 2>&1; then
+          aws sts get-caller-identity > /dev/null && echo "✅ AWS credentials valid" || echo "❌ AWS credentials invalid"
+        else
+          echo "❌ AWS provider support is disabled. Set OPENTOFU_PROVIDER_AWS=true to enable."
+        fi

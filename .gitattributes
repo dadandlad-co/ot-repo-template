@@ -1,0 +1,230 @@
+#----------------------------------------------------------------------------
+# OpenTofu Repository Template - Git Attributes Configuration
+# This file defines attributes for path names in the repository
+#----------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------
+# Text Files - Ensure consistent line endings
+#----------------------------------------------------------------------------
+
+# Default behavior: normalize line endings to LF on checkin
+* text=auto eol=lf
+
+# Explicitly set text files
+*.tf text eol=lf
+*.tfvars text eol=lf
+*.hcl text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.sh text eol=lf
+*.bash text eol=lf
+*.zsh text eol=lf
+*.fish text eol=lf
+
+# Configuration files
+*.toml text eol=lf
+*.ini text eol=lf
+*.cfg text eol=lf
+*.conf text eol=lf
+*.config text eol=lf
+
+# Web files
+*.html text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.jsx text eol=lf
+*.tsx text eol=lf
+*.xml text eol=lf
+
+# Documentation files
+*.rst text eol=lf
+*.tex text eol=lf
+*.adoc text eol=lf
+
+# Data files
+*.csv text eol=lf
+*.tsv text eol=lf
+*.sql text eol=lf
+
+#----------------------------------------------------------------------------
+# Programming Languages
+#----------------------------------------------------------------------------
+
+# Python
+*.py text eol=lf
+*.pyx text eol=lf
+*.pxd text eol=lf
+*.pxi text eol=lf
+
+# Go
+*.go text eol=lf
+*.mod text eol=lf
+*.sum text eol=lf
+
+# Ruby
+*.rb text eol=lf
+*.rake text eol=lf
+Gemfile text eol=lf
+Rakefile text eol=lf
+
+# Java
+*.java text eol=lf
+*.gradle text eol=lf
+*.properties text eol=lf
+
+# C/C++
+*.c text eol=lf
+*.cpp text eol=lf
+*.cxx text eol=lf
+*.cc text eol=lf
+*.h text eol=lf
+*.hpp text eol=lf
+*.hxx text eol=lf
+
+#----------------------------------------------------------------------------
+# Special Git Files
+#----------------------------------------------------------------------------
+
+.gitattributes text eol=lf
+.gitignore text eol=lf
+.gitmodules text eol=lf
+.gitkeep text eol=lf
+
+#----------------------------------------------------------------------------
+# CI/CD and Development Files
+#----------------------------------------------------------------------------
+
+# GitHub workflows and templates
+.github/**/*.yml text eol=lf
+.github/**/*.yaml text eol=lf
+.github/**/*.md text eol=lf
+
+# Docker files
+Dockerfile* text eol=lf
+*.dockerfile text eol=lf
+docker-compose*.yml text eol=lf
+.dockerignore text eol=lf
+
+# Makefile
+Makefile text eol=lf
+makefile text eol=lf
+*.make text eol=lf
+*.mk text eol=lf
+
+# Task files
+Taskfile.yml text eol=lf
+Taskfile.yaml text eol=lf
+
+#----------------------------------------------------------------------------
+# Binary Files - Do not modify
+#----------------------------------------------------------------------------
+
+# Images
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.webp binary
+*.bmp binary
+*.tiff binary
+
+# Audio/Video
+*.mp3 binary
+*.mp4 binary
+*.avi binary
+*.mov binary
+*.wav binary
+*.flac binary
+
+# Documents
+*.pdf binary
+*.doc binary
+*.docx binary
+*.xls binary
+*.xlsx binary
+*.ppt binary
+*.pptx binary
+
+# Archives
+*.zip binary
+*.tar binary
+*.gz binary
+*.7z binary
+*.rar binary
+
+# Executables
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.app binary
+
+# Fonts
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.eot binary
+
+#----------------------------------------------------------------------------
+# Language-specific Attributes
+#----------------------------------------------------------------------------
+
+# OpenTofu/Terraform files
+*.tf linguist-language=HCL
+*.tfvars linguist-language=HCL
+*.hcl linguist-language=HCL
+
+# Identify test files
+*test.tf linguist-generated=false
+*_test.tf linguist-generated=false
+test_*.tf linguist-generated=false
+*.tftest.hcl linguist-generated=false
+
+#----------------------------------------------------------------------------
+# Git LFS (Large File Storage) - Uncomment if using LFS
+#----------------------------------------------------------------------------
+
+# Track large binary files with Git LFS
+# *.psd filter=lfs diff=lfs merge=lfs -text
+# *.ai filter=lfs diff=lfs merge=lfs -text
+# *.zip filter=lfs diff=lfs merge=lfs -text
+
+#----------------------------------------------------------------------------
+# Security Attributes
+#----------------------------------------------------------------------------
+
+# Prevent diff/merge of sensitive files
+*.key binary
+*.pem binary
+*.p12 binary
+*.pfx binary
+*.jks binary
+
+# Mark sensitive configuration files
+*secret* filter=clean
+*credential* filter=clean
+*password* filter=clean
+
+#----------------------------------------------------------------------------
+# Custom Export Attributes
+#----------------------------------------------------------------------------
+
+# Exclude files from git archive exports
+.github/ export-ignore
+.vscode/ export-ignore
+*.log export-ignore
+tmp/ export-ignore
+.DS_Store export-ignore
+
+# Include important files in exports
+README.md export-ignore=false
+LICENSE* export-ignore=false
+CHANGELOG* export-ignore=false
